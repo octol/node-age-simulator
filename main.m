@@ -4,8 +4,9 @@ network_iterations = 200;
 init_iterations = 100;
 
 number_of_sections = 10000;
-start_section_size = 10;
-max_section_size = 30;
+start_section_size = 16;
+max_section_size = 40;
+min_section_size = 8;
 part_of_empty_section_slots_filled_per_iteration = 8; % means: 1/8
 fraction_of_new_nodes_are_malicious = 0.10;
 max_durability = 19;
@@ -51,8 +52,8 @@ for n = 1:network_iterations
     nodes.work(nodes_to_age_indices) = 0;
     nodes.age(nodes_to_age_indices) = 0;
     nodes.durability(nodes_to_age_indices) = 0;
-    nodes.malicious(nodes_to_age_indices) = 0;
-    nodes.active(nodes_to_age_indices) = 0;
+    nodes.malicious(nodes_to_age_indices) = false;
+    nodes.active(nodes_to_age_indices) = false;
 
     % Randomly drop nodes depending on durability
     network_size_before_drop = sum(sum(nodes.active));
@@ -60,11 +61,36 @@ for n = 1:network_iterations
     nodes.work(nodes_to_drop) = 0;
     nodes.age(nodes_to_drop) = 0;
     nodes.durability(nodes_to_drop) = 0;
-    nodes.malicious(nodes_to_drop) = 0;
+    nodes.malicious(nodes_to_drop) = false;
     nodes.active(nodes_to_drop) = false;
 
     % Join new nodes
     nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
+
+    % Node joins should flow towards the smallest sections, but to be on the
+    % safe side add nodes to the smallest sections first.
+    % Quite an ugly workaround, but this all of course comes from performance
+    % considerations.
+    % Duplication galore!
+    small_sections = sum(nodes.active, 2) < min_section_size;
+    number_of_small_sections = sum(small_sections);
+    while sum(small_sections) > 0
+        i = find(small_sections, 1);
+        j = find(nodes.active(i,:) == false, 1);
+        nodes.work(i,j) = 0;
+        nodes.age(i,j) = 0;
+        nodes.durability(i,j) = randi([1,max_durability]);
+        if n > init_iterations
+            nodes.malicious(i,j) = logical(rand() < fraction_of_new_nodes_are_malicious);
+        else
+            nodes.malicious(i,j) = false;
+        end
+        nodes.active(i,j) = true;
+        small_sections = sum(nodes.active, 2) < min_section_size;
+        nodes_to_add -= 1;
+    end
+
+    % Add the rest
     node_slots_available = find(nodes.active == false);
     I = randperm(length(node_slots_available));
     assert(length(I) > nodes_to_add);
@@ -74,8 +100,11 @@ for n = 1:network_iterations
     nodes.durability(node_slots_available(I)) = randi([1,max_durability], length(I), 1);
     if n > init_iterations
         nodes.malicious(node_slots_available(I)) = logical(rand(length(I), 1) < fraction_of_new_nodes_are_malicious);
+    else
+        nodes.malicious(node_slots_available(I)) = false;
     end
     nodes.active(node_slots_available(I)) = true;
+
 
     % Only start plotting once we've established a steady-state (honest) network
     if n > init_iterations
@@ -130,10 +159,10 @@ for n = 1:network_iterations
 end
 
 figure(3)
-plot(sort(nodes.work(:),'descend'), 'linewidth', 2)
+plot(sort(nodes.work(:),'descend'), 'linewidth', 2, 'b-')
 title('Work distribution')
 figure(4)
-plot(sort(nodes.age(:),'descend'), 'linewidth', 2)
+plot(sort(nodes.age(:),'descend'), 'linewidth', 2, 'b-')
 title('Age distribution')
 
 % figure(1)
