@@ -54,10 +54,21 @@ for n = 1:network_iterations
     nodes.malicious(nodes_to_age_indices) = 0;
     nodes.active(nodes_to_age_indices) = 0;
 
+    % Randomly drop nodes depending on durability
+    network_size_before_drop = sum(sum(nodes.active));
+    nodes_to_drop = (rand(number_of_sections, max_section_size).*nodes.active) < 1./(nodes.durability + 1);
+    nodes.work(nodes_to_drop) = 0;
+    nodes.age(nodes_to_drop) = 0;
+    nodes.durability(nodes_to_drop) = 0;
+    nodes.malicious(nodes_to_drop) = 0;
+    nodes.active(nodes_to_drop) = false;
+
     % Join new nodes
+    nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
     node_slots_available = find(nodes.active == false);
     I = randperm(length(node_slots_available));
-    I = I(1:end/part_of_empty_section_slots_filled_per_iteration);
+    assert(length(I) > nodes_to_add);
+    I = I(1:nodes_to_add);
     nodes.work(node_slots_available(I)) = 0;
     nodes.age(node_slots_available(I)) = 0;
     nodes.durability(node_slots_available(I)) = randi([1,max_durability], length(I), 1);
@@ -65,14 +76,6 @@ for n = 1:network_iterations
         nodes.malicious(node_slots_available(I)) = logical(rand(length(I), 1) < fraction_of_new_nodes_are_malicious);
     end
     nodes.active(node_slots_available(I)) = true;
-
-    % Randomly drop nodes depending on durability
-    nodes_to_drop = (rand(number_of_sections, max_section_size).*nodes.active) < 1./(nodes.durability + 1);
-    nodes.work(nodes_to_drop) = 0;
-    nodes.age(nodes_to_drop) = 0;
-    nodes.durability(nodes_to_drop) = 0;
-    nodes.malicious(nodes_to_drop) = 0;
-    nodes.active(nodes_to_drop) = false;
 
     % Only start plotting once we've established a steady-state (honest) network
     if n > init_iterations
