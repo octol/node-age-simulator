@@ -8,7 +8,7 @@ start_section_size = 10;
 max_section_size = 30;
 part_of_empty_section_slots_filled_per_iteration = 8; % means: 1/8
 fraction_of_new_nodes_are_malicious = 0.10;
-max_durability = 9;
+max_durability = 19;
 
 section_stalled_threshold = 1/3;
 section_compromised_threshold = 2/3;
@@ -27,13 +27,11 @@ figure(2); clf
 
 % Evolve network before starting
 for n = 1:network_iterations
-    % Part of the network does work
-    nodes_that_does_work = logical(randi([0,1], number_of_sections, max_section_size));
-    nodes_that_does_work = and(nodes_that_does_work, nodes.active);
-    nodes.work(nodes_that_does_work) += 1;
+    % All nodes does one unit of work
+    nodes.work(nodes.active) += 1;
 
     % Increase age and relocate if work == 2^n
-    nodes_to_age = and(rem(log2(nodes.work), 1) == 0, nodes_that_does_work);
+    nodes_to_age = rem(log2(nodes.work), 1) == 0;
     nodes.age(nodes_to_age) += 1;
     nodes_to_age_indices = find(nodes_to_age);
 
@@ -127,6 +125,13 @@ for n = 1:network_iterations
         hold off
     end
 end
+
+figure(3)
+plot(sort(nodes.work(:),'descend'), 'linewidth', 2)
+title('Work distribution')
+figure(4)
+plot(sort(nodes.age(:),'descend'), 'linewidth', 2)
+title('Age distribution')
 
 % figure(1)
 % print -dpng fraction_malicious_work.png
