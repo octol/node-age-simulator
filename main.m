@@ -159,13 +159,22 @@ for n = 1:network_iterations
 end
 
 figure(3)
-plot(sort(nodes.work(:),'descend'), 'linewidth', 2, 'b-')
+hist(nodes.work(nodes.work(:) > 0), 100)
 title('Work distribution')
 figure(4)
-plot(sort(nodes.age(:),'descend'), 'linewidth', 2, 'b-')
+hist(nodes.age(nodes.age(:) > 0), 30);
 title('Age distribution')
+figure(5)
+hist(nodes.durability(nodes.durability(:) > 0), 50);
+title('Durability distribution')
 
 % figure(1)
 % print -dpng fraction_malicious_work.png
 % figure(2)
 % print -dpng fraction_stalled_sections.png
+% figure(3)
+% print -dpng work_distribution.png
+% figure(4)
+% print -dpng age_distribution.png
+figure(5)
+print -dpng durability_distribution.png
