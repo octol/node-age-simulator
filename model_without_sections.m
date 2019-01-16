@@ -6,7 +6,7 @@ network_iterations = 10000;
 network_size = 100000;
 
 % Initial setup
-nodes.work = 2.^linspace(2,8,network_size);
+nodes.work = 2.^linspace(3,8,network_size);
 nodes.age = floor(log2(nodes.work));
 nodes.malicious = logical(zeros(size(nodes.work)));
 
@@ -14,6 +14,7 @@ nodes.malicious = logical(zeros(size(nodes.work)));
 for n = 1:init_network_iterations
     % All nodes does 1 unit of work w
     nodes.work += 1;
+    nodes.age = floor(log2(nodes.work));
 
     % Reset nodes according to 1/w
     nodes_resetting = 1./nodes.work > rand(1, network_size);
@@ -34,6 +35,7 @@ fprintf("Adding adversary\n");
 for n = 1:network_iterations
     % All nodes does 1 unit of work w
     nodes.work += 1;
+    nodes.age = floor(log2(nodes.work));
 
     % Reset nodes according to 1/w
     nodes_resetting = 1./nodes.work > rand(1, network_size);
@@ -41,9 +43,18 @@ for n = 1:network_iterations
     nodes.age(nodes_resetting) = log2(nodes.work(nodes_resetting));
     nodes.malicious(nodes_resetting) = logical(rand(numel(find(nodes_resetting)),1) < 0.1);
 
+    % Collect network work stats
     network_work = sum(nodes.work);
     malicious_work = sum(nodes.work(nodes.malicious));
     frac_malicious_work(n) = malicious_work / network_work;
+
+    % Collect elder stats
+    % Let's assume ~50% of adults are elders
+    [sorted_age,I] = sort(nodes.age);
+    elder_work = sum(nodes.work(I(end/2:end)));
+    malicious_nodes_work = nodes.work.*nodes.malicious;
+    elder_work_malicious = sum(malicious_nodes_work(I(end/2:end)));
+    frac_malicious_elder_work(n) = elder_work_malicious / elder_work;
 
     if mod(n, 10) == 0
         fraction_of_network_resetting = sum(nodes_resetting) / network_size
@@ -59,6 +70,12 @@ for n = 1:network_iterations
         plot(frac_malicious_work, 'b-','LineWidth',2);
         xlabel("Iteration")
         title("Fraction of malicious work")
+        drawnow
+
+        figure(3)
+        plot(frac_malicious_elder_work, 'b-','LineWidth',2);
+        xlabel("Iteration")
+        title("Fraction of malicious elder work")
         drawnow
     end
 end
