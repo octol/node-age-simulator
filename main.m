@@ -23,9 +23,6 @@ nodes.malicious = zeros(number_of_sections, max_section_size);
 nodes.active = logical(zeros(number_of_sections, max_section_size));
 nodes.active(:,1:start_section_size) = ones(number_of_sections, start_section_size);
 
-figure(1); clf
-figure(2); clf
-
 % Evolve network before starting
 for n = 1:network_iterations
     % All nodes does one unit of work
@@ -140,21 +137,17 @@ for n = 1:network_iterations
         fprintf('section size (mean/std): %d / %d \n', section_size_mean(m), section_size_std(m));
         fprintf('  section work (mean/std): %d / %d \n', section_work_mean(m), section_work_std(m));
         figure(1)
-        hold on
         plot(network_work_malicious_fraction, 'b-', 'linewidth',2);
         title('\Sigma(w_{malicious}) / \Sigma(w)');
         xlabel('Iterations')
         drawnow
-        hold off
 
         figure(2)
-        hold on
         plot(stalled_sections, 'b-', 'linewidth', 2);
         plot(compromised_sections, 'b-', 'linewidth', 2);
         title('Fraction of stalled and compromised sections');
         xlabel('Iterations')
         drawnow
-        hold off
     end
 end
 
@@ -176,5 +169,5 @@ title('Durability distribution')
 % print -dpng work_distribution.png
 % figure(4)
 % print -dpng age_distribution.png
-figure(5)
-print -dpng durability_distribution.png
+% figure(5)
+% print -dpng durability_distribution.png
