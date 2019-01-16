@@ -3,11 +3,9 @@ clear all
 network_iterations = 10000;
 network_size = 1000000;
 
-% Initial setup (uniform for now)
+% Initial setup
 %nodes.work = randi([4,32], 1, network_size);
 nodes.work = 4*ones(1,network_size);
-%nodes.work = 1./nodes.work;
-%nodes.work = round(1./(rand(1,network_size)+3));
 
 for n = 1:network_iterations
     % All nodes does 1 unit of work w

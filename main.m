@@ -1,15 +1,14 @@
 clear all
 
 network_iterations = 200;
-init_iterations = 100;
+init_iterations = 0;
 
-number_of_sections = 10000;
+number_of_sections = 1000;
 start_section_size = 16;
 max_section_size = 40;
 min_section_size = 8;
 part_of_empty_section_slots_filled_per_iteration = 8; % means: 1/8
 fraction_of_new_nodes_are_malicious = 0.10;
-max_durability = 19;
 
 section_stalled_threshold = 1/3;
 section_compromised_threshold = 2/3;
@@ -18,10 +17,21 @@ section_compromised_threshold = 2/3;
 % with zero age
 nodes.work = zeros(number_of_sections, max_section_size);
 nodes.age = zeros(number_of_sections, max_section_size);
-nodes.durability = randi([1,max_durability], number_of_sections, max_section_size);
 nodes.malicious = zeros(number_of_sections, max_section_size);
 nodes.active = logical(zeros(number_of_sections, max_section_size));
 nodes.active(:,1:start_section_size) = ones(number_of_sections, start_section_size);
+
+nodes_active_indices = find(nodes.active);
+num_of_age_buckets = 32;
+age_bucket_size = numel(nodes_active_indices) / num_of_age_buckets;
+
+% Flat spread of ages
+% Start nodes at age 4 (they're adults, not infants)
+for ii = 0:num_of_age_buckets-1
+    nodes.work(nodes_active_indices(ii*age_bucket_size+1:(ii+1)*age_bucket_size)) = 2^(2+ii);
+end
+node_age = log2(nodes.work);
+nodes.age(nodes.active) = node_age(nodes.active);
 
 % Evolve network before starting
 for n = 1:network_iterations
@@ -43,26 +53,24 @@ for n = 1:network_iterations
     % Relocate
     nodes.work(node_slots_available(I)) = nodes.work(nodes_to_age_indices);
     nodes.age(node_slots_available(I)) = nodes.age(nodes_to_age_indices);
-    nodes.durability(node_slots_available(I)) = nodes.durability(nodes_to_age_indices);
     nodes.malicious(node_slots_available(I)) = nodes.malicious(nodes_to_age_indices);
     nodes.active(node_slots_available(I)) = nodes.active(nodes_to_age_indices);
     nodes.work(nodes_to_age_indices) = 0;
     nodes.age(nodes_to_age_indices) = 0;
-    nodes.durability(nodes_to_age_indices) = 0;
     nodes.malicious(nodes_to_age_indices) = false;
     nodes.active(nodes_to_age_indices) = false;
 
-    % Randomly drop nodes depending on durability
+    % Randomly drop nodes according to 1/w
     network_size_before_drop = sum(sum(nodes.active));
-    nodes_to_drop = (rand(number_of_sections, max_section_size).*nodes.active) < 1./(nodes.durability + 1);
+    nodes_to_drop = and(rand(number_of_sections, max_section_size) < 1./nodes.work, nodes.active);
     nodes.work(nodes_to_drop) = 0;
     nodes.age(nodes_to_drop) = 0;
-    nodes.durability(nodes_to_drop) = 0;
     nodes.malicious(nodes_to_drop) = false;
     nodes.active(nodes_to_drop) = false;
 
     % Join new nodes
     nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
+    %fraction_of_network_dropped = nodes_to_add / network_size_before_drop
 
     % Node joins should flow towards the smallest sections, but to be on the
     % safe side add nodes to the smallest sections first.
@@ -74,9 +82,8 @@ for n = 1:network_iterations
     while sum(small_sections) > 0
         i = find(small_sections, 1);
         j = find(nodes.active(i,:) == false, 1);
-        nodes.work(i,j) = 0;
-        nodes.age(i,j) = 0;
-        nodes.durability(i,j) = randi([1,max_durability]);
+        nodes.work(i,j) = 2^4;
+        nodes.age(i,j) = log2(nodes.work(i,j));
         if n > init_iterations
             nodes.malicious(i,j) = logical(rand() < fraction_of_new_nodes_are_malicious);
         else
@@ -92,16 +99,14 @@ for n = 1:network_iterations
     I = randperm(length(node_slots_available));
     assert(length(I) > nodes_to_add);
     I = I(1:nodes_to_add);
-    nodes.work(node_slots_available(I)) = 0;
-    nodes.age(node_slots_available(I)) = 0;
-    nodes.durability(node_slots_available(I)) = randi([1,max_durability], length(I), 1);
+    nodes.work(node_slots_available(I)) = 2^4;
+    nodes.age(node_slots_available(I)) = log2(2^4);
     if n > init_iterations
         nodes.malicious(node_slots_available(I)) = logical(rand(length(I), 1) < fraction_of_new_nodes_are_malicious);
     else
         nodes.malicious(node_slots_available(I)) = false;
     end
     nodes.active(node_slots_available(I)) = true;
-
 
     % Only start plotting once we've established a steady-state (honest) network
     if n > init_iterations
@@ -149,6 +154,14 @@ for n = 1:network_iterations
         xlabel('Iterations')
         drawnow
     end
+    figure(6)
+    hist(nodes.work(nodes.active), 10)
+    xlabel("Node work")
+    drawnow
+    figure(7)
+    hist(nodes.age(nodes.active), 10)
+    xlabel("Node age")
+    drawnow
 end
 
 figure(3)
@@ -157,9 +170,6 @@ title('Work distribution')
 figure(4)
 hist(nodes.age(nodes.age(:) > 0), 30);
 title('Age distribution')
-figure(5)
-hist(nodes.durability(nodes.durability(:) > 0), 50);
-title('Durability distribution')
 
 % figure(1)
 % print -dpng fraction_malicious_work.png
@@ -169,5 +179,3 @@ title('Durability distribution')
 % print -dpng work_distribution.png
 % figure(4)
 % print -dpng age_distribution.png
-% figure(5)
-% print -dpng durability_distribution.png
