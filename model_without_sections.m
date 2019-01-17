@@ -58,6 +58,9 @@ end
 
 fprintf("-- Adding adversary --\n");
 
+% Keep track of how many nodes are lost
+nodes.initial = logical(ones(size(nodes.work)));
+
 % Add adversary
 for n = 1:network_iterations
     % All nodes does 1 unit of work w
@@ -69,6 +72,7 @@ for n = 1:network_iterations
     nodes.work(nodes_resetting) = 16;
     nodes.age(nodes_resetting) = log2(nodes.work(nodes_resetting));
     nodes.malicious(nodes_resetting) = logical(rand(numel(find(nodes_resetting)),1) < 0.1);
+    nodes.initial(nodes_resetting) = false;
 
     % Collect network work stats
     network_work = sum(nodes.work);
@@ -85,6 +89,8 @@ for n = 1:network_iterations
 
     fraction_of_network_resetting(init_network_iterations + n) = sum(nodes_resetting) / network_size;
     fraction_of_work_resetting(init_network_iterations + n) = sum(nodes.work(nodes_resetting)) / sum(nodes.work);
+
+    fraction_of_initial_nodes_lost(n) = 1 - sum(nodes.initial)/length(nodes.initial);
 
     if mod(n, 100) == 0
         figure(4)
@@ -104,6 +110,11 @@ for n = 1:network_iterations
         xlabel("Iteration")
         title("Fraction of malicious elder work")
         drawnow
+
+        figure(7)
+        plot(fraction_of_initial_nodes_lost, 'b-', 'LineWidth',2);
+        xlabel("Iteration")
+        title("Fraction of nodes churned since attack started");
     end
 end
 
@@ -113,3 +124,5 @@ end
 %print -dpng simple_model_malicious_work.png
 %figure(6)
 %print -dpng simple_model_malicious_elder_work.png
+%figure(7)
+%print -dpng simple_model_fraction_of_nodes_lost.png
