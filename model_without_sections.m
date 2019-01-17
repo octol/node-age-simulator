@@ -1,8 +1,7 @@
 clear all
 
-init_network_iterations = 1000;
+init_network_iterations = 10000;
 network_iterations = 10000;
-%network_size = 10;
 network_size = 100000;
 
 % Initial setup
@@ -21,15 +20,43 @@ for n = 1:init_network_iterations
     nodes.work(nodes_resetting) = 16;
     nodes.age(nodes_resetting) = log2(nodes.work(nodes_resetting));
 
-    if mod(n, 10) == 0
+    fraction_of_network_resetting(n) = sum(nodes_resetting) / network_size;
+    fraction_of_work_resetting(n) = sum(nodes.work(nodes_resetting)) / sum(nodes.work);
+
+    if mod(n, 100) == 0
         figure(1)
-        %hist(nodes.work,100);
-        hist(log2(nodes.work),100);
+        hist(nodes.work, 50);
+        xlabel('work');
+        drawnow
+
+        figure(2)
+        hist(log2(nodes.work), 50);
+        xlabel('log2(work)');
+        drawnow
+
+        figure(3)
+        hist(nodes.age, 50);
+        xlabel('age = floor(log2(work))')
+        drawnow
+
+        figure(4)
+        semilogy(1:n, fraction_of_network_resetting, 1:n, fraction_of_work_resetting)
+        legend("Network reset rate", "Work reset rate");
+        grid on
         drawnow
     end
 end
 
-fprintf("Adding adversary\n");
+%figure(1)
+%print -dpng simple_model_work_dist.png
+%figure(2)
+%print -dpng simple_model_log_work_dist.png
+%figure(3)
+%print -dpng simple_model_age_dist.png
+%figure(4)
+%print -dpng simple_model_network_reset_rate.png
+
+fprintf("-- Adding adversary --\n");
 
 % Add adversary
 for n = 1:network_iterations
@@ -46,7 +73,7 @@ for n = 1:network_iterations
     % Collect network work stats
     network_work = sum(nodes.work);
     malicious_work = sum(nodes.work(nodes.malicious));
-    frac_malicious_work(n) = malicious_work / network_work;
+    frac_malicious_work(init_network_iterations + n) = malicious_work / network_work;
 
     % Collect elder stats
     % Let's assume ~50% of adults are elders
@@ -54,28 +81,35 @@ for n = 1:network_iterations
     elder_work = sum(nodes.work(I(end/2:end)));
     malicious_nodes_work = nodes.work.*nodes.malicious;
     elder_work_malicious = sum(malicious_nodes_work(I(end/2:end)));
-    frac_malicious_elder_work(n) = elder_work_malicious / elder_work;
+    frac_malicious_elder_work(init_network_iterations + n) = elder_work_malicious / elder_work;
 
-    if mod(n, 10) == 0
-        fraction_of_network_resetting = sum(nodes_resetting) / network_size
-        fraction_of_work_resetting = sum(nodes.work(nodes_resetting)) / sum(nodes.work)
+    fraction_of_network_resetting(init_network_iterations + n) = sum(nodes_resetting) / network_size;
+    fraction_of_work_resetting(init_network_iterations + n) = sum(nodes.work(nodes_resetting)) / sum(nodes.work);
 
-        figure(1)
-        %hist(nodes.work,100);
-        hist(log2(nodes.work),100);
-        xlabel("Node age")
+    if mod(n, 100) == 0
+        figure(4)
+        semilogy(1:length(fraction_of_network_resetting), fraction_of_network_resetting, 1:length(fraction_of_work_resetting), fraction_of_work_resetting)
+        legend("Network reset rate", "Work reset rate");
+        grid on
         drawnow
 
-        figure(2)
+        figure(5)
         plot(frac_malicious_work, 'b-','LineWidth',2);
         xlabel("Iteration")
         title("Fraction of malicious work")
         drawnow
 
-        figure(3)
+        figure(6)
         plot(frac_malicious_elder_work, 'b-','LineWidth',2);
         xlabel("Iteration")
         title("Fraction of malicious elder work")
         drawnow
     end
 end
+
+%figure(4)
+%print -dpng simple_model_network_reset_rate_with_attack.png
+%figure(5)
+%print -dpng simple_model_malicious_work.png
+%figure(6)
+%print -dpng simple_model_malicious_elder_work.png
