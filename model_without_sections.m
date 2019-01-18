@@ -79,6 +79,8 @@ for n = 1:network_iterations
     malicious_work = sum(nodes.work(nodes.malicious));
     frac_malicious_work(init_network_iterations + n) = malicious_work / network_work;
 
+    fraction_of_nodes_are_malicious(init_network_iterations + n) = sum(nodes.malicious) / length(nodes.malicious);
+
     % Collect elder stats
     % Let's assume ~50% of adults are elders
     [sorted_age,I] = sort(nodes.age);
@@ -90,7 +92,7 @@ for n = 1:network_iterations
     fraction_of_network_resetting(init_network_iterations + n) = sum(nodes_resetting) / network_size;
     fraction_of_work_resetting(init_network_iterations + n) = sum(nodes.work(nodes_resetting)) / sum(nodes.work);
 
-    fraction_of_initial_nodes_lost(n) = 1 - sum(nodes.initial)/length(nodes.initial);
+    fraction_of_initial_nodes_lost(init_network_iterations + n) = 1 - sum(nodes.initial)/length(nodes.initial);
 
     if mod(n, 100) == 0
         figure(4)
@@ -100,29 +102,15 @@ for n = 1:network_iterations
         drawnow
 
         figure(5)
-        plot(frac_malicious_work, 'b-','LineWidth',2);
+        N = 1:length(fraction_of_network_resetting);
+        plot(N, fraction_of_nodes_are_malicious, 'LineWidth', 2, N, frac_malicious_work, 'LineWidth', 2, N, frac_malicious_elder_work, 'LineWidth', 2);
         xlabel("Iteration")
-        title("Fraction of malicious work")
+        legend({"Malicious nodes", "Malicious work", "Malicious elder work"},"Location", "NorthWest");
         drawnow
-
-        figure(6)
-        plot(frac_malicious_elder_work, 'b-','LineWidth',2);
-        xlabel("Iteration")
-        title("Fraction of malicious elder work")
-        drawnow
-
-        figure(7)
-        plot(fraction_of_initial_nodes_lost, 'b-', 'LineWidth',2);
-        xlabel("Iteration")
-        title("Fraction of nodes churned since attack started");
     end
 end
 
 %figure(4)
 %print -dpng simple_model_network_reset_rate_with_attack.png
 %figure(5)
-%print -dpng simple_model_malicious_work.png
-%figure(6)
-%print -dpng simple_model_malicious_elder_work.png
-%figure(7)
-%print -dpng simple_model_fraction_of_nodes_lost.png
+%print -dpng simple_model_malicious_fractions.png
