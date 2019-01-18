@@ -2,14 +2,34 @@ clear all
 figure(2); clf
 figure(3); clf
 
-network_iterations = 20000;
+network_iterations = 30000;
 init_iterations = 10000;
 
 number_of_sections = 1000;
-start_section_size = 16;
-max_section_size = 40;
-min_section_size = 8;
-fraction_of_new_nodes_are_malicious = 0.10;
+
+% Scenario A
+%start_section_size = 16;
+%max_section_size = 40;
+%min_section_size = 8;
+%fraction_of_new_nodes_are_malicious = 0.10;
+
+% Scenario B
+%start_section_size = 32;
+%max_section_size = 80;
+%min_section_size = 16;
+%fraction_of_new_nodes_are_malicious = 0.10;
+
+% Scenario C
+%start_section_size = 16;
+%max_section_size = 40;
+%min_section_size = 8;
+%fraction_of_new_nodes_are_malicious = 0.20;
+
+% Scenario D
+start_section_size = 32;
+max_section_size = 80;
+min_section_size = 16;
+fraction_of_new_nodes_are_malicious = 0.20;
 
 section_stalled_threshold = 1/3;
 section_compromised_threshold = 2/3;
