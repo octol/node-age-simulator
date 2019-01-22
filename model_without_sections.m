@@ -1,15 +1,17 @@
 clear all
 
-init_network_iterations = 10000;
-network_iterations = 10000;
+%init_network_iterations = 10000;
+init_network_iterations = 0;
+network_iterations = 20000;
 network_size = 100000;
+network_age = 32;
 
 % Initial setup
-nodes.work = 2.^linspace(3,8,network_size);
+nodes.work = 2.^((network_age-4)*rand(1,network_size) + 4);
 nodes.age = floor(log2(nodes.work));
 nodes.malicious = logical(zeros(size(nodes.work)));
 
-% Fully mature network
+% Run without adversaries first for awhile to check the work distribution assumption
 for n = 1:init_network_iterations
     % All nodes does 1 unit of work w
     nodes.work += 1;
@@ -27,22 +29,26 @@ for n = 1:init_network_iterations
         figure(1)
         hist(nodes.work, 50);
         xlabel('work');
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age),', Iterations: ', num2str(n)])
         drawnow
 
         figure(2)
         hist(log2(nodes.work), 50);
         xlabel('log2(work)');
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age),', Iterations: ', num2str(n)])
         drawnow
 
         figure(3)
         hist(nodes.age, 50);
         xlabel('age = floor(log2(work))')
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age),', Iterations: ', num2str(n)])
         drawnow
 
         figure(4)
         semilogy(1:n, fraction_of_network_resetting, 1:n, fraction_of_work_resetting)
         legend("Network reset rate", "Work reset rate");
         grid on
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age),', Iterations: ', num2str(n)])
         drawnow
     end
 end
@@ -95,22 +101,40 @@ for n = 1:network_iterations
     fraction_of_initial_nodes_lost(init_network_iterations + n) = 1 - sum(nodes.initial)/length(nodes.initial);
 
     if mod(n, 100) == 0
+        figure(1)
+        hist(nodes.work, 50);
+        xlabel('work');
+        drawnow
+
+        figure(2)
+        hist(log2(nodes.work), 50);
+        xlabel('log2(work)');
+        drawnow
+
+        figure(3)
+        hist(nodes.age, 50);
+        xlabel('age = floor(log2(work))')
+        drawnow
+
         figure(4)
         semilogy(1:length(fraction_of_network_resetting), fraction_of_network_resetting, 1:length(fraction_of_work_resetting), fraction_of_work_resetting)
-        legend("Network reset rate", "Work reset rate");
+        legend({"Network reset rate", "Work reset rate"}, 'Location', 'West');
+        xlabel("work/node")
         grid on
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age)])
         drawnow
 
         figure(5)
         N = 1:length(fraction_of_network_resetting);
         plot(N, fraction_of_nodes_are_malicious, 'LineWidth', 2, N, frac_malicious_work, 'LineWidth', 2, N, frac_malicious_elder_work, 'LineWidth', 2);
-        xlabel("Iteration")
+        xlabel("work/node")
         legend({"Malicious nodes", "Malicious work", "Malicious elder work"},"Location", "NorthWest");
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age)])
         drawnow
     end
 end
 
 %figure(4)
-%print -dpng simple_model_network_reset_rate_with_attack.png
+%print(['simple_model_network_reset_rate_with_attack_network_age_',num2str(network_age),'.png'],'-dpng')
 %figure(5)
-%print -dpng simple_model_malicious_fractions.png
+%print(['simple_model_malicious_fractions_network_age_16_network_age_',num2str(network_age),'.png'],'-dpng')
