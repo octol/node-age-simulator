@@ -157,15 +157,10 @@ for n = 1:network_iterations
     section_size = sum(nodes.active, 2)';
     section_size_mean(n) = mean(section_size);
     section_size_std(n) = std(section_size);
-    %network_size(n) = sum(section_size);
 
     section_size_malicious = sum(nodes.malicious, 2)';
-    %section_size_malicious_mean(n) = mean(section_size_malicious);
-    %section_size_malicious_std(n) = std(section_size_malicious);
-    %network_size_malicious(n) = sum(section_size_malicious);
 
     section_elders_malicious = sum(nodes.elder.*nodes.malicious,2)';
-    section_elders_malicious_mean(n) = mean(section_elders_malicious);
     section_elders_malicious_mean(n) = mean(section_elders_malicious);
     network_elders_malicious(n) = sum(section_elders_malicious);
 
@@ -184,7 +179,7 @@ for n = 1:network_iterations
     section_load_mean(n) = mean(section_load);
     section_load_std(n) = std(section_load);
 
-    section_elders_load = section_elders_malicious ./ section_size;
+    section_elders_load = section_elders_malicious ./ min_section_size;
     section_elders_load_mean(n) = mean(section_elders_load);
     section_elders_load_std(n) = std(section_elders_load);
 
@@ -206,16 +201,6 @@ for n = 1:network_iterations
         fprintf('  section work (mean/std): %d / %d \n', section_work_mean(n), section_work_std(n));
 
         figure(1)
-        %subplot(2,2,1)
-        %hist(nodes.age(nodes.active), 50);
-        %xlabel('Age');
-        %title(['Sections (number/mean/std/min): ',...
-        %    num2str(number_of_sections),'/',...
-        %    num2str(section_size_mean(n)),'/',...
-        %    num2str(section_size_std(n),2),'/',...
-        %    num2str(min_section_size)]
-        %)
-        %drawnow;
 
         subplot(2,2,1)
         hold on
@@ -277,7 +262,13 @@ for n = 1:network_iterations
             'Stallable sections (work)',
             'Location','Northwest'
         );
-        title(['Adversary: ', num2str(fraction_of_new_nodes_are_malicious)]);
+        title(['Sections (number/mean/std/min): ',...
+            num2str(number_of_sections),'/',...
+            num2str(section_size_mean(n)),'/',...
+            num2str(section_size_std(n),2),'/',...
+            num2str(min_section_size),
+            'Adversary: ', num2str(fraction_of_new_nodes_are_malicious)]
+        )
         drawnow
     end
 end
