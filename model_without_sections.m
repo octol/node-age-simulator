@@ -4,7 +4,8 @@ clear all
 init_network_iterations = 0;
 network_iterations = 20000;
 network_size = 100000;
-network_age = 32;
+network_age = 16;
+fraction_of_new_nodes_are_malicious = 0.1;
 
 % Initial setup
 nodes.work = 2.^((network_age-4)*rand(1,network_size) + 4);
@@ -77,7 +78,7 @@ for n = 1:network_iterations
     nodes_resetting = 1./nodes.work > rand(1, network_size);
     nodes.work(nodes_resetting) = 16;
     nodes.age(nodes_resetting) = log2(nodes.work(nodes_resetting));
-    nodes.malicious(nodes_resetting) = logical(rand(numel(find(nodes_resetting)),1) < 0.1);
+    nodes.malicious(nodes_resetting) = logical(rand(numel(find(nodes_resetting)),1) < fraction_of_new_nodes_are_malicious);
     nodes.initial(nodes_resetting) = false;
 
     % Collect network work stats
@@ -129,12 +130,12 @@ for n = 1:network_iterations
         plot(N, fraction_of_nodes_are_malicious, 'LineWidth', 2, N, frac_malicious_work, 'LineWidth', 2, N, frac_malicious_elder_work, 'LineWidth', 2);
         xlabel("work/node")
         legend({"Malicious nodes", "Malicious work", "Malicious elder work"},"Location", "NorthWest");
-        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age)])
+        title(['Nodes: ',num2str(network_size),', Initial network age: ', num2str(network_age),' , Adversary: ', num2str(fraction_of_new_nodes_are_malicious)])
         drawnow
     end
 end
 
 %figure(4)
-%print(['simple_model_network_reset_rate_with_attack_network_age_',num2str(network_age),'.png'],'-dpng')
+%print(['simple_model_network_reset_rate_with_attack_network_age_',num2str(network_age),'_adversary_',num2str(fraction_of_new_nodes_are_malicious),'.png'],'-dpng')
 %figure(5)
-%print(['simple_model_malicious_fractions_network_age_16_network_age_',num2str(network_age),'.png'],'-dpng')
+%print(['simple_model_malicious_fractions_network_age_',num2str(network_age),'_adversary_',num2str(fraction_of_new_nodes_are_malicious),'.png'],'-dpng')
