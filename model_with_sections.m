@@ -144,14 +144,11 @@ for n = 1:network_iterations
     nodes.active(node_slots_available(I)) = true;
     assert(floor(log2(nodes.work(nodes.active))) == nodes.age(nodes.active));
 
-    % Assign elder status (slow!)
-    for s = 1:size(nodes.work,1)
-        [sorted_work,I] = sort(nodes.work(s,:),'descend');
-        nodes.elder(s,I(1:min_section_size)) = true;
-        if numel(I) > min_section_size
-            nodes.elder(s,I(min_section_size+1:end)) = false;
-        end
-    end
+    % Assign elder status
+    [sorted_work,I] = sort(nodes.work, 2, 'descend');
+    nodes.elder = logical(zeros(number_of_sections, max_section_size));
+    ind = sub2ind (size(nodes.elder), repmat(1:rows(nodes.elder),min_section_size,1), I(:,1:min_section_size)');
+    nodes.elder(ind) = true;
     assert(all(sum(nodes.elder,2) == min_section_size))
 
     % Section size statistics
