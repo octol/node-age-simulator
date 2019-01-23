@@ -1,4 +1,6 @@
 clear all
+figure(1); clf
+figure(2); clf
 
 network_iterations = 20000;
 init_iterations = 0;
