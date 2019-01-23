@@ -171,8 +171,8 @@ for n = 1:network_iterations
     stalled_sections_elders(n) = sum(section_elders_load > section_stalled_threshold) / number_of_sections;
 
     % Section work statistics
-    section_work = sum(nodes.work.*nodes.active, 2)';
-    section_work_malicious = sum(nodes.work.*nodes.malicious.*nodes.active, 2)';
+    section_work = sum(nodes.work.*nodes.elder.*nodes.active, 2)';
+    section_work_malicious = sum(nodes.work.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
     section_work_load = section_work_malicious ./ section_work;
     section_work_load_max(n) = max(section_work_load);
     section_work_load_mean(n) = mean(section_work_load);
@@ -180,8 +180,8 @@ for n = 1:network_iterations
     stalled_sections_work(n) = sum(section_work_load > section_stalled_threshold) / number_of_sections;
 
     % Section age statistics
-    section_age = sum(nodes.age.*nodes.active, 2)';
-    section_age_malicious = sum(nodes.age.*nodes.malicious.*nodes.active, 2)';
+    section_age = sum(nodes.age.*nodes.elder.*nodes.active, 2)';
+    section_age_malicious = sum(nodes.age.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
     section_age_load = section_age_malicious ./ section_age;
     section_age_load_max(n) = max(section_age_load);
     section_age_load_mean(n) = mean(section_age_load);
