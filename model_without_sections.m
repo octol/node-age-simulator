@@ -8,7 +8,7 @@ init_network_age = 16;
 fraction_of_new_nodes_are_malicious = 0.2;
 
 % Initial setup
-nodes.work = 2.^((init_network_age-4)*rand(1,network_size) + 4);
+nodes.work = round(2.^((init_network_age-4)*rand(1,network_size) + 4));
 nodes.age = floor(log2(nodes.work));
 nodes.malicious = logical(zeros(size(nodes.work)));
 
