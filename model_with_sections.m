@@ -157,6 +157,7 @@ for n = 1:network_iterations
     section_size_std(n) = std(section_size);
     section_size_malicious = sum(nodes.malicious.*nodes.active, 2)';
     section_size_load = section_size_malicious ./ section_size;
+    section_size_load_max(n) = max(section_size_load);
     section_size_load_mean(n) = mean(section_size_load);
     section_size_load_std(n) = std(section_size_load);
     stalled_sections_size(n) = sum(section_size_load > section_stalled_threshold) / number_of_sections;
@@ -164,6 +165,7 @@ for n = 1:network_iterations
     % Section elders statistics
     section_elders_malicious = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
     section_elders_load = section_elders_malicious ./ min_section_size;
+    section_elders_load_max(n) = max(section_elders_load);
     section_elders_load_mean(n) = mean(section_elders_load);
     section_elders_load_std(n) = std(section_elders_load);
     stalled_sections_elders(n) = sum(section_elders_load > section_stalled_threshold) / number_of_sections;
@@ -172,6 +174,7 @@ for n = 1:network_iterations
     section_work = sum(nodes.work.*nodes.active, 2)';
     section_work_malicious = sum(nodes.work.*nodes.malicious.*nodes.active, 2)';
     section_work_load = section_work_malicious ./ section_work;
+    section_work_load_max(n) = max(section_work_load);
     section_work_load_mean(n) = mean(section_work_load);
     section_work_load_std(n) = std(section_work_load);
     stalled_sections_work(n) = sum(section_work_load > section_stalled_threshold) / number_of_sections;
@@ -180,6 +183,7 @@ for n = 1:network_iterations
     section_age = sum(nodes.age.*nodes.active, 2)';
     section_age_malicious = sum(nodes.age.*nodes.malicious.*nodes.active, 2)';
     section_age_load = section_age_malicious ./ section_age;
+    section_age_load_max(n) = max(section_age_load);
     section_age_load_mean(n) = mean(section_age_load);
     section_age_load_std(n) = std(section_age_load);
     stalled_sections_age(n) = sum(section_age_load > section_stalled_threshold) / number_of_sections;
@@ -204,10 +208,11 @@ for n = 1:network_iterations
              section_size_load_mean(1:100:end) + section_size_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
+        H4 = plot(1:100:n, section_size_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
-        legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
+        legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
         title('Malicious nodes per section')
         drawnow;
 
@@ -226,10 +231,11 @@ for n = 1:network_iterations
              section_elders_load_mean(1:100:end) + section_elders_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
+        H4 = plot(1:100:n, section_elders_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
-        legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
+        legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
         title('Malicious elders per section')
         drawnow;
 
@@ -248,10 +254,11 @@ for n = 1:network_iterations
              section_age_load_mean(1:100:end) + section_age_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
+        H4 = plot(1:100:n, section_age_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
-        legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
+        legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
         title('Malicious age per section')
         drawnow;
 
@@ -270,10 +277,11 @@ for n = 1:network_iterations
              section_work_load_mean(1:100:end) + section_work_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
+        H4 = plot(1:100:n, section_work_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
-        legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
+        legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
         title('Malicious work per section')
         drawnow;
 
