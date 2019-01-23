@@ -9,35 +9,46 @@ number_of_sections = 1000;
 initial_network_age = 16;
 
 % Scenario A
-start_section_size = 16;
-max_section_size = 40;
-min_section_size = 8;
+number_of_sections = 5000;
+start_section_size = 20;
+max_section_size = 50;
+min_section_size = 10;
 fraction_of_new_nodes_are_malicious = 0.20;
 
-% Scenario B
-%start_section_size = 32;
-%max_section_size = 80;
-%min_section_size = 16;
+% Scenario B (double section size)
+%number_of_sections = 2500;
+%start_section_size = 40;
+%max_section_size = 100;
+%min_section_size = 20;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
-% Scenario C
-%start_section_size = 16;
-%max_section_size = 40;
-%min_section_size = 8;
+% Scenario C (double network size)
+%number_of_sections = 10000;
+%start_section_size = 20;
+%max_section_size = 50;
+%min_section_size = 10;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
-% Scenario D
-%start_section_size = 32;
-%max_section_size = 80;
-%min_section_size = 16;
+% Scenario D (further increase section size)
+%number_of_sections = 1000;
+%start_section_size = 100;
+%max_section_size = 250;
+%min_section_size = 50;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
-% Scenario E
-%init_iterations = 0;
-%start_section_size = 128;
-%max_section_size = 320;
-%min_section_size = 64;
-%fraction_of_new_nodes_are_malicious = 0.25;
+% Scenario E (further increase section size)
+%number_of_sections = 500;
+%start_section_size = 200;
+%max_section_size = 500;
+%min_section_size = 100;
+%fraction_of_new_nodes_are_malicious = 0.20;
+
+% Scenario V
+%number_of_sections = 5000;
+%start_section_size = 200;
+%max_section_size = 500;
+%min_section_size = 100;
+%fraction_of_new_nodes_are_malicious = 0.20;
 
 section_stalled_threshold = 1/3;
 
