@@ -1,6 +1,6 @@
 clear all
 
-network_iterations = 30000;
+network_iterations = 20000;
 init_iterations = 0;
 
 number_of_sections = 1000;
@@ -16,7 +16,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 32;
 %max_section_size = 80;
 %min_section_size = 16;
-%fraction_of_new_nodes_are_malicious = 0.10;
+%fraction_of_new_nodes_are_malicious = 0.20;
 
 % Scenario C
 %start_section_size = 16;
@@ -38,7 +38,6 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %fraction_of_new_nodes_are_malicious = 0.25;
 
 section_stalled_threshold = 1/3;
-section_compromised_threshold = 2/3;
 
 % Initialise network with min_section_size everywhere and only honest nodes
 % with zero age
@@ -153,125 +152,162 @@ for n = 1:network_iterations
     end
     assert(all(sum(nodes.elder,2) == min_section_size))
 
-    % Collect statistics
+    % Section size statistics
     section_size = sum(nodes.active, 2)';
     section_size_mean(n) = mean(section_size);
     section_size_std(n) = std(section_size);
+    section_size_malicious = sum(nodes.malicious.*nodes.active, 2)';
+    section_size_load = section_size_malicious ./ section_size;
+    section_size_load_mean(n) = mean(section_size_load);
+    section_size_load_std(n) = std(section_size_load);
+    stalled_sections_size(n) = sum(section_size_load > section_stalled_threshold) / number_of_sections;
 
-    section_size_malicious = sum(nodes.malicious, 2)';
-
-    section_elders_malicious = sum(nodes.elder.*nodes.malicious,2)';
-    section_elders_malicious_mean(n) = mean(section_elders_malicious);
-    network_elders_malicious(n) = sum(section_elders_malicious);
-
-    section_work = sum(nodes.work, 2)';
-    section_work_mean(n) = mean(section_work);
-    section_work_std(n) = std(section_work);
-    network_work(n) = sum(section_work);
-
-    section_work_malicious = sum(nodes.work.*nodes.malicious, 2)';
-    section_work_malicious_mean(n) = mean(section_work_malicious);
-    section_work_malicious_std(n) = std(section_work_malicious);
-    network_work_malicious(n) = sum(section_work_malicious);
-    network_work_malicious_fraction(n) = network_work_malicious(n) / network_work(n);
-
-    section_load = section_size_malicious ./ section_size;
-    section_load_mean(n) = mean(section_load);
-    section_load_std(n) = std(section_load);
-
+    % Section elders statistics
+    section_elders_malicious = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
     section_elders_load = section_elders_malicious ./ min_section_size;
     section_elders_load_mean(n) = mean(section_elders_load);
     section_elders_load_std(n) = std(section_elders_load);
+    stalled_sections_elders(n) = sum(section_elders_load > section_stalled_threshold) / number_of_sections;
 
+    % Section work statistics
+    section_work = sum(nodes.work.*nodes.active, 2)';
+    section_work_malicious = sum(nodes.work.*nodes.malicious.*nodes.active, 2)';
     section_work_load = section_work_malicious ./ section_work;
     section_work_load_mean(n) = mean(section_work_load);
     section_work_load_std(n) = std(section_work_load);
-
-    stalled_sections(n) = sum(section_load > section_stalled_threshold) / number_of_sections;
-    compromised_sections(n) = sum(section_load > section_compromised_threshold) / number_of_sections;
-
-    stalled_sections_elders(n) = sum(section_elders_load > section_stalled_threshold) / number_of_sections;
-    compromised_sections_edlers(n) = sum(section_elders_load > section_compromised_threshold) / number_of_sections;
-
     stalled_sections_work(n) = sum(section_work_load > section_stalled_threshold) / number_of_sections;
-    compromised_sections_work(n) = sum(section_work_load > section_compromised_threshold) / number_of_sections;
+
+    % Section age statistics
+    section_age = sum(nodes.age.*nodes.active, 2)';
+    section_age_malicious = sum(nodes.age.*nodes.malicious.*nodes.active, 2)';
+    section_age_load = section_age_malicious ./ section_age;
+    section_age_load_mean(n) = mean(section_age_load);
+    section_age_load_std(n) = std(section_age_load);
+    stalled_sections_age(n) = sum(section_age_load > section_stalled_threshold) / number_of_sections;
 
     if mod(n, 100) == 0
         fprintf('section size (mean/std): %d / %d \n', section_size_mean(n), section_size_std(n));
-        fprintf('  section work (mean/std): %d / %d \n', section_work_mean(n), section_work_std(n));
 
         figure(1)
 
         subplot(2,2,1)
         hold on
-        H1 = plot(1:n, section_load_mean, 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_size_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
-            1:n, [max(section_load_mean - 0.5*section_load_std, 0); section_load_mean + 0.5*section_load_std],
+            1:100:n,
+            [max(section_size_load_mean(1:100:end) - 0.5*section_size_load_std(1:100:end), 0);...
+             section_size_load_mean(1:100:end) + 0.5*section_size_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
-            1:n, [max(section_load_mean - section_load_std, 0); section_load_mean + section_load_std],
+            1:100:n,
+            [max(section_size_load_mean(1:100:end) - section_size_load_std(1:100:end), 0); ...
+             section_size_load_mean(1:100:end) + section_size_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
         hold off
+        xlabel("Iterations");
+        ylabel("Fraction");
         legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
         title('Malicious nodes per section')
         drawnow;
 
         subplot(2,2,2)
         hold on
-        H1 = plot(1:n, section_elders_load_mean, 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_elders_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
-            1:n, [max(section_elders_load_mean - 0.5*section_elders_load_std,0); section_elders_load_mean + 0.5*section_elders_load_std],
+            1:100:n,
+            [max(section_elders_load_mean(1:100:end) - 0.5*section_elders_load_std(1:100:end),0);
+             section_elders_load_mean(1:100:end) + 0.5*section_elders_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
-            1:n, [max(section_elders_load_mean - section_elders_load_std,0); section_elders_load_mean + section_elders_load_std],
+            1:100:n,
+            [max(section_elders_load_mean(1:100:end) - section_elders_load_std(1:100:end),0);
+             section_elders_load_mean(1:100:end) + section_elders_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
         hold off
+        xlabel("Iterations");
+        ylabel("Fraction");
         legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
         title('Malicious elders per section')
         drawnow;
 
         subplot(2,2,3)
         hold on
-        H1 = plot(1:n, section_work_load_mean, 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_age_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
-            1:n, [max(section_work_load_mean - 0.5*section_work_load_std,0); section_work_load_mean + 0.5*section_work_load_std],
+            1:100:n,
+            [max(section_age_load_mean(1:100:end) - 0.5*section_age_load_std(1:100:end),0);...
+             section_age_load_mean(1:100:end) + 0.5*section_age_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
-            1:n, [max(section_work_load_mean - section_work_load_std,0); section_work_load_mean + section_work_load_std],
+            1:100:n,
+            [max(section_age_load_mean(1:100:end) - section_age_load_std(1:100:end),0);...
+             section_age_load_mean(1:100:end) + section_age_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
         hold off
+        xlabel("Iterations");
+        ylabel("Fraction");
+        legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
+        title('Malicious age per section')
+        drawnow;
+
+        subplot(2,2,4)
+        hold on
+        H1 = plot(1:100:n, section_work_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+        H2 = plot(
+            1:100:n,
+            [max(section_work_load_mean(1:100:end) - 0.5*section_work_load_std(1:100:end),0);...
+             section_work_load_mean(1:100:end) + 0.5*section_work_load_std(1:100:end)],
+            'LineWidth', 2, 'Color', 'b'
+        );
+        H3 = plot(
+            1:100:n,
+            [max(section_work_load_mean(1:100:end) - section_work_load_std(1:100:end),0);...
+             section_work_load_mean(1:100:end) + section_work_load_std(1:100:end)],
+            'LineWidth', 2, 'Color', 'm'
+        );
+        hold off
+        xlabel("Iterations");
+        ylabel("Fraction");
         legend([H1, H2(1), H3(1)], '\mu', '0.5\sigma', '\sigma', 'Location', 'Northwest');
         title('Malicious work per section')
         drawnow;
 
-        subplot(2,2,4)
+        %subplot(2,2,4)
+        figure(2)
         plot(
-            1:n, stalled_sections, 'LineWidth', 2,
-            1:n, stalled_sections_elders, 'LineWidth', 2,
-            1:n, stalled_sections_work, 'LineWidth', 2
+            1:100:n, stalled_sections_size(1:100:end), 'LineWidth', 2,
+            1:100:n, stalled_sections_elders(1:100:end), 'LineWidth', 2,
+            1:100:n, stalled_sections_age(1:100:end), 'LineWidth', 2,
+            1:100:n, stalled_sections_work(1:100:end), 'LineWidth', 2
         );
         legend(
             'Stallable sections (nodes)',
             'Stallable sections (elders)',
+            'Stallable sections (age)',
             'Stallable sections (work)',
             'Location','Northwest'
         );
-        title(['Sections (number/mean/std/min): ',...
+        title(['Sections (#/\mu/\sigma/min): ',...
             num2str(number_of_sections),'/',...
             num2str(section_size_mean(n)),'/',...
             num2str(section_size_std(n),2),'/',...
-            num2str(min_section_size),
-            'Adversary: ', num2str(fraction_of_new_nodes_are_malicious)]
+            num2str(min_section_size),...
+            ', adversary: ', num2str(fraction_of_new_nodes_are_malicious),...
+            ', a_n=', num2str(initial_network_age)]
         )
+        xlabel("Iterations");
+        ylabel("Fraction");
         drawnow
     end
 end
 
 %figure(1)
-%print(["section_model_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),".png"],'-dpng');
+%print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),".png"],'-dpng');
+%figure(2)
+%print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),".png"],'-dpng');
