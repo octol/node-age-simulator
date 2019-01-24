@@ -18,6 +18,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 40;
 %max_section_size = 100;
 %min_section_size = 20;
+%num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
 % Scenario C (double network size)
@@ -25,6 +26,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 20;
 %max_section_size = 50;
 %min_section_size = 10;
+%num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
 % Scenario D (further increase section size)
@@ -32,6 +34,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 100;
 %max_section_size = 250;
 %min_section_size = 50;
+%num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
 % Scenario E (further increase section size)
@@ -39,6 +42,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 200;
 %max_section_size = 500;
 %min_section_size = 100;
+%num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
 % Scenario F (0.5 attacker)
@@ -46,6 +50,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 200;
 %max_section_size = 500;
 %min_section_size = 100;
+%num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.50;
 
 % Scenario V
@@ -53,6 +58,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %start_section_size = 200;
 %max_section_size = 500;
 %min_section_size = 100;
+%num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
 section_stalled_threshold = 1/3;
@@ -78,9 +84,9 @@ nodes.age(nodes.active) = floor(log2(nodes.work(nodes.active)));
 assert(size(nodes.work,1) == number_of_sections);
 for s = 1:size(nodes.work,1)
     [sorted_work,I] = sort(nodes.work(s,:),'descend');
-    nodes.elder(s,I(1:min_section_size)) = true;
-    if numel(I) > min_section_size
-        nodes.elder(s,I(min_section_size+1:end)) = false;
+    nodes.elder(s,I(1:num_of_elders)) = true;
+    if numel(I) > num_of_elders
+        nodes.elder(s,I(num_of_elders+1:end)) = false;
     end
 end
 
@@ -163,9 +169,9 @@ for n = 1:network_iterations
     % Assign elder status
     [sorted_work,I] = sort(nodes.work, 2, 'descend');
     nodes.elder = logical(zeros(number_of_sections, max_section_size));
-    ind = sub2ind (size(nodes.elder), repmat(1:rows(nodes.elder),min_section_size,1), I(:,1:min_section_size)');
+    ind = sub2ind (size(nodes.elder), repmat(1:rows(nodes.elder),num_of_elders,1), I(:,1:num_of_elders)');
     nodes.elder(ind) = true;
-    assert(all(sum(nodes.elder,2) == min_section_size))
+    assert(all(sum(nodes.elder,2) == num_of_elders))
 
     % Section size statistics
     section_size = sum(nodes.active, 2)';
@@ -180,7 +186,7 @@ for n = 1:network_iterations
 
     % Section elders statistics
     section_elders_malicious = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_elders_load = section_elders_malicious ./ min_section_size;
+    section_elders_load = section_elders_malicious ./ num_of_elders;
     section_elders_load_max(n) = max(section_elders_load);
     section_elders_load_mean(n) = mean(section_elders_load);
     section_elders_load_std(n) = std(section_elders_load);
@@ -322,7 +328,8 @@ for n = 1:network_iterations
             num2str(section_size_std(n),2),'/',...
             num2str(min_section_size),...
             ', adversary: ', num2str(fraction_of_new_nodes_are_malicious),...
-            ', a_n=', num2str(initial_network_age)]
+            ', a_n=', num2str(initial_network_age),...
+            ', elders=', num2str(num_of_elders)]
         )
         xlabel("Iterations");
         ylabel("Fraction");
@@ -331,6 +338,6 @@ for n = 1:network_iterations
 end
 
 %figure(1)
-%print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),".png"],'-dpng');
+%print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),"_elders_",num2str(num_of_elders),".png"],'-dpng');
 %figure(2)
-%print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),".png"],'-dpng');
+%print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),"_elders_",num2str(num_of_elders),".png"],'-dpng');
