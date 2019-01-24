@@ -4,8 +4,6 @@ figure(2); clf
 
 network_iterations = 20000;
 init_iterations = 0;
-
-number_of_sections = 1000;
 initial_network_age = 16;
 
 % Scenario A
@@ -42,6 +40,13 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %max_section_size = 500;
 %min_section_size = 100;
 %fraction_of_new_nodes_are_malicious = 0.20;
+
+% Scenario F (0.5 attacker)
+%number_of_sections = 500;
+%start_section_size = 200;
+%max_section_size = 500;
+%min_section_size = 100;
+%fraction_of_new_nodes_are_malicious = 0.50;
 
 % Scenario V
 %number_of_sections = 5000;
@@ -326,6 +331,6 @@ for n = 1:network_iterations
 end
 
 %figure(1)
-%print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),".png"],'-dpng');
+%print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),".png"],'-dpng');
 %figure(2)
-%print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),".png"],'-dpng');
+%print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),".png"],'-dpng');
