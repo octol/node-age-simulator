@@ -106,6 +106,47 @@ function nodes = assign_elder_status(nodes, num_of_elders)
     assert(all(sum(nodes.elder,2) == num_of_elders))
 end
 
+function section_stats = collect_section_statistics(nodes, n, section_stalled_threshold, num_of_elders)
+    number_of_sections = size(nodes.active, 1);
+
+    % Section size statistics
+    section_stats.size = sum(nodes.active, 2)';
+    section_stats.size_mean(n) = mean(section_stats.size);
+    section_stats.size_std(n) = std(section_stats.size);
+    section_stats.size_malicious = sum(nodes.malicious.*nodes.active, 2)';
+    section_stats.size_load = section_stats.size_malicious ./ section_stats.size;
+    section_stats.size_load_max(n) = max(section_stats.size_load);
+    section_stats.size_load_mean(n) = mean(section_stats.size_load);
+    section_stats.size_load_std(n) = std(section_stats.size_load);
+    section_stats.stalled_size(n) = sum(section_stats.size_load > section_stalled_threshold) / number_of_sections;
+
+    % Section elders statistics
+    section_stats.elders_malicious = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
+    section_stats.elders_load = section_stats.elders_malicious ./ num_of_elders;
+    section_stats.elders_load_max(n) = max(section_stats.elders_load);
+    section_stats.elders_load_mean(n) = mean(section_stats.elders_load);
+    section_stats.elders_load_std(n) = std(section_stats.elders_load);
+    section_stats.stalled_elders(n) = sum(section_stats.elders_load > section_stalled_threshold) / number_of_sections;
+
+    % Section work statistics
+    section_stats.work = sum(nodes.work.*nodes.elder.*nodes.active, 2)';
+    section_stats.work_malicious = sum(nodes.work.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
+    section_stats.work_load = section_stats.work_malicious ./ section_stats.work;
+    section_stats.work_load_max(n) = max(section_stats.work_load);
+    section_stats.work_load_mean(n) = mean(section_stats.work_load);
+    section_stats.work_load_std(n) = std(section_stats.work_load);
+    section_stats.stalled_work(n) = sum(section_stats.work_load > section_stalled_threshold) / number_of_sections;
+
+    % Section age statistics
+    section_stats.age = sum(nodes.age.*nodes.elder.*nodes.active, 2)';
+    section_stats.age_malicious = sum(nodes.age.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
+    section_stats.age_load = section_stats.age_malicious ./ section_stats.age;
+    section_stats.age_load_max(n) = max(section_stats.age_load);
+    section_stats.age_load_mean(n) = mean(section_stats.age_load);
+    section_stats.age_load_std(n) = std(section_stats.age_load);
+    section_stats.stalled_age(n) = sum(section_stats.age_load > section_stalled_threshold) / number_of_sections;
+end
+
 network_iterations = 20000;
 init_iterations = 0;
 initial_network_age = 16;
@@ -173,7 +214,7 @@ fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = true;
 % with zero age
 nodes = initialise_network(number_of_sections, max_section_size, start_section_size);
 nodes = initialise_nodes(nodes, initial_network_age, num_of_elders);
-assert(size(nodes.work,1) == number_of_sections);
+assert(size(nodes.work, 1) == number_of_sections);
 
 % Evolve network before starting
 for n = 1:network_iterations
@@ -204,64 +245,29 @@ for n = 1:network_iterations
     fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones =  ...
         sum(sum(nodes.malicious))/sum(sum(nodes.active)) < fraction_of_new_nodes_are_malicious;
 
-    % Section size statistics
-    section_size = sum(nodes.active, 2)';
-    section_size_mean(n) = mean(section_size);
-    section_size_std(n) = std(section_size);
-    section_size_malicious = sum(nodes.malicious.*nodes.active, 2)';
-    section_size_load = section_size_malicious ./ section_size;
-    section_size_load_max(n) = max(section_size_load);
-    section_size_load_mean(n) = mean(section_size_load);
-    section_size_load_std(n) = std(section_size_load);
-    stalled_sections_size(n) = sum(section_size_load > section_stalled_threshold) / number_of_sections;
-
-    % Section elders statistics
-    section_elders_malicious = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_elders_load = section_elders_malicious ./ num_of_elders;
-    section_elders_load_max(n) = max(section_elders_load);
-    section_elders_load_mean(n) = mean(section_elders_load);
-    section_elders_load_std(n) = std(section_elders_load);
-    stalled_sections_elders(n) = sum(section_elders_load > section_stalled_threshold) / number_of_sections;
-
-    % Section work statistics
-    section_work = sum(nodes.work.*nodes.elder.*nodes.active, 2)';
-    section_work_malicious = sum(nodes.work.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_work_load = section_work_malicious ./ section_work;
-    section_work_load_max(n) = max(section_work_load);
-    section_work_load_mean(n) = mean(section_work_load);
-    section_work_load_std(n) = std(section_work_load);
-    stalled_sections_work(n) = sum(section_work_load > section_stalled_threshold) / number_of_sections;
-
-    % Section age statistics
-    section_age = sum(nodes.age.*nodes.elder.*nodes.active, 2)';
-    section_age_malicious = sum(nodes.age.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_age_load = section_age_malicious ./ section_age;
-    section_age_load_max(n) = max(section_age_load);
-    section_age_load_mean(n) = mean(section_age_load);
-    section_age_load_std(n) = std(section_age_load);
-    stalled_sections_age(n) = sum(section_age_load > section_stalled_threshold) / number_of_sections;
+    section_stats = collect_section_statistics(nodes, n, section_stalled_threshold, num_of_elders);
 
     if mod(n, 100) == 0
-        fprintf('section size (mean/std): %d / %d \n', section_size_mean(n), section_size_std(n));
+        fprintf('section size (mean/std): %d / %d \n', section_stats.size_mean(n), section_stats.size_std(n));
 
         figure(1)
 
         subplot(2,2,1)
         hold on
-        H1 = plot(1:100:n, section_size_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_stats.size_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
             1:100:n,
-            [max(section_size_load_mean(1:100:end) - 0.5*section_size_load_std(1:100:end), 0);...
-             section_size_load_mean(1:100:end) + 0.5*section_size_load_std(1:100:end)],
+            [max(section_stats.size_load_mean(1:100:end) - 0.5*section_stats.size_load_std(1:100:end), 0);...
+             section_stats.size_load_mean(1:100:end) + 0.5*section_stats.size_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
             1:100:n,
-            [max(section_size_load_mean(1:100:end) - section_size_load_std(1:100:end), 0); ...
-             section_size_load_mean(1:100:end) + section_size_load_std(1:100:end)],
+            [max(section_stats.size_load_mean(1:100:end) - section_stats.size_load_std(1:100:end), 0); ...
+             section_stats.size_load_mean(1:100:end) + section_stats.size_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
-        H4 = plot(1:100:n, section_size_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+        H4 = plot(1:100:n, section_stats.size_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
@@ -271,20 +277,20 @@ for n = 1:network_iterations
 
         subplot(2,2,2)
         hold on
-        H1 = plot(1:100:n, section_elders_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_stats.elders_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
             1:100:n,
-            [max(section_elders_load_mean(1:100:end) - 0.5*section_elders_load_std(1:100:end),0);
-             section_elders_load_mean(1:100:end) + 0.5*section_elders_load_std(1:100:end)],
+            [max(section_stats.elders_load_mean(1:100:end) - 0.5*section_stats.elders_load_std(1:100:end),0);
+             section_stats.elders_load_mean(1:100:end) + 0.5*section_stats.elders_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
             1:100:n,
-            [max(section_elders_load_mean(1:100:end) - section_elders_load_std(1:100:end),0);
-             section_elders_load_mean(1:100:end) + section_elders_load_std(1:100:end)],
+            [max(section_stats.elders_load_mean(1:100:end) - section_stats.elders_load_std(1:100:end),0);
+             section_stats.elders_load_mean(1:100:end) + section_stats.elders_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
-        H4 = plot(1:100:n, section_elders_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+        H4 = plot(1:100:n, section_stats.elders_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
@@ -294,20 +300,20 @@ for n = 1:network_iterations
 
         subplot(2,2,3)
         hold on
-        H1 = plot(1:100:n, section_age_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_stats.age_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
             1:100:n,
-            [max(section_age_load_mean(1:100:end) - 0.5*section_age_load_std(1:100:end),0);...
-             section_age_load_mean(1:100:end) + 0.5*section_age_load_std(1:100:end)],
+            [max(section_stats.age_load_mean(1:100:end) - 0.5*section_stats.age_load_std(1:100:end),0);...
+             section_stats.age_load_mean(1:100:end) + 0.5*section_stats.age_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
             1:100:n,
-            [max(section_age_load_mean(1:100:end) - section_age_load_std(1:100:end),0);...
-             section_age_load_mean(1:100:end) + section_age_load_std(1:100:end)],
+            [max(section_stats.age_load_mean(1:100:end) - section_stats.age_load_std(1:100:end),0);...
+             section_stats.age_load_mean(1:100:end) + section_stats.age_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
-        H4 = plot(1:100:n, section_age_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+        H4 = plot(1:100:n, section_stats.age_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
@@ -317,20 +323,20 @@ for n = 1:network_iterations
 
         subplot(2,2,4)
         hold on
-        H1 = plot(1:100:n, section_work_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+        H1 = plot(1:100:n, section_stats.work_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
         H2 = plot(
             1:100:n,
-            [max(section_work_load_mean(1:100:end) - 0.5*section_work_load_std(1:100:end),0);...
-             section_work_load_mean(1:100:end) + 0.5*section_work_load_std(1:100:end)],
+            [max(section_stats.work_load_mean(1:100:end) - 0.5*section_stats.work_load_std(1:100:end),0);...
+             section_stats.work_load_mean(1:100:end) + 0.5*section_stats.work_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'b'
         );
         H3 = plot(
             1:100:n,
-            [max(section_work_load_mean(1:100:end) - section_work_load_std(1:100:end),0);...
-             section_work_load_mean(1:100:end) + section_work_load_std(1:100:end)],
+            [max(section_stats.work_load_mean(1:100:end) - section_stats.work_load_std(1:100:end),0);...
+             section_stats.work_load_mean(1:100:end) + section_stats.work_load_std(1:100:end)],
             'LineWidth', 2, 'Color', 'm'
         );
-        H4 = plot(1:100:n, section_work_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+        H4 = plot(1:100:n, section_stats.work_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
         hold off
         xlabel("Iterations");
         ylabel("Fraction");
@@ -341,10 +347,10 @@ for n = 1:network_iterations
         %subplot(2,2,4)
         figure(2)
         plot(
-            1:100:n, stalled_sections_size(1:100:end), 'LineWidth', 2,
-            1:100:n, stalled_sections_elders(1:100:end), 'LineWidth', 2,
-            1:100:n, stalled_sections_age(1:100:end), 'LineWidth', 2,
-            1:100:n, stalled_sections_work(1:100:end), 'LineWidth', 2
+            1:100:n, section_stats.stalled_size(1:100:end), 'LineWidth', 2,
+            1:100:n, section_stats.stalled_elders(1:100:end), 'LineWidth', 2,
+            1:100:n, section_stats.stalled_age(1:100:end), 'LineWidth', 2,
+            1:100:n, section_stats.stalled_work(1:100:end), 'LineWidth', 2
         );
         legend(
             'Stallable sections (nodes)',
@@ -355,8 +361,8 @@ for n = 1:network_iterations
         );
         title(['Sections (#/\mu/\sigma/min): ',...
             num2str(number_of_sections),'/',...
-            num2str(section_size_mean(n)),'/',...
-            num2str(section_size_std(n),2),'/',...
+            num2str(section_stats.size_mean(n)),'/',...
+            num2str(section_stats.size_std(n),2),'/',...
             num2str(min_section_size),...
             ', adversary: ', num2str(fraction_of_new_nodes_are_malicious),...
             ', a_n=', num2str(initial_network_age),...
