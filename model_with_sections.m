@@ -2,6 +2,31 @@ clear all
 figure(1); clf
 figure(2); clf
 
+function nodes = initialise_network(number_of_sections, max_section_size, start_section_size)
+    nodes.work = zeros(number_of_sections, max_section_size);
+    nodes.age = zeros(number_of_sections, max_section_size);
+    nodes.malicious = zeros(number_of_sections, max_section_size);
+    nodes.active = logical(zeros(number_of_sections, max_section_size));
+    nodes.active(:,1:start_section_size) = ones(number_of_sections, start_section_size);
+    nodes.elder = logical(zeros(number_of_sections, max_section_size));
+end
+
+function nodes = initialise_nodes(nodes, initial_network_age, num_of_elders)
+    % Flat spread of ages
+    % Start nodes at age 4 (they're adults, not infants)
+    nodes_active_indices = find(nodes.active);
+    nodes.work(nodes_active_indices) = round(2.^((initial_network_age-4)*rand(size(nodes_active_indices)) + 4));
+    nodes.age(nodes.active) = floor(log2(nodes.work(nodes.active)));
+
+    for s = 1:size(nodes.work,1)
+        [sorted_work,I] = sort(nodes.work(s,:),'descend');
+        nodes.elder(s,I(1:num_of_elders)) = true;
+        if numel(I) > num_of_elders
+            nodes.elder(s,I(num_of_elders+1:end)) = false;
+        end
+    end
+end
+
 function [nodes, I] = increase_age(nodes)
     nodes_to_age = rem(log2(nodes.work), 1) == 0;
     nodes.age(nodes_to_age) += 1;
@@ -33,6 +58,52 @@ function nodes = churn(nodes)
     nodes.age(nodes_to_drop) = 0;
     nodes.malicious(nodes_to_drop) = false;
     nodes.active(nodes_to_drop) = false;
+end
+
+function nodes = join_new(nodes, nodes_to_add, min_section_size, add_malicious_nodes, fraction_of_new_nodes_are_malicious)
+    % Node joins should flow towards the smallest sections, but to be on the
+    % safe side add nodes to the smallest sections first.
+    % Quite an ugly workaround, but this all of course comes from performance
+    % considerations.
+    % Duplication galore!
+    small_sections = sum(nodes.active, 2) < min_section_size;
+    number_of_small_sections = sum(small_sections);
+    while sum(small_sections) > 0
+        i = find(small_sections, 1);
+        j = find(nodes.active(i,:) == false, 1);
+        nodes.work(i,j) = 2^4;
+        nodes.age(i,j) = round(log2(nodes.work(i,j)));
+        if add_malicious_nodes
+            nodes.malicious(i,j) = logical(rand() < fraction_of_new_nodes_are_malicious);
+        else
+            nodes.malicious(i,j) = false;
+        end
+        nodes.active(i,j) = true;
+        small_sections = sum(nodes.active, 2) < min_section_size;
+        nodes_to_add -= 1;
+    end
+
+    % Add the rest
+    node_slots_available = find(nodes.active == false);
+    I = randperm(length(node_slots_available));
+    assert(length(I) > nodes_to_add);
+    I = I(1:nodes_to_add);
+    nodes.work(node_slots_available(I)) = 2^4;
+    nodes.age(node_slots_available(I)) = round(log2(2^4));
+    if add_malicious_nodes
+        nodes.malicious(node_slots_available(I)) = logical(rand(length(I), 1) < fraction_of_new_nodes_are_malicious);
+    else
+        nodes.malicious(node_slots_available(I)) = false;
+    end
+    nodes.active(node_slots_available(I)) = true;
+end
+
+function nodes = assign_elder_status(nodes, num_of_elders)
+    [sorted_work,I] = sort(nodes.work, 2, 'descend');
+    nodes.elder = logical(zeros(size(nodes.active)));
+    ind = sub2ind (size(nodes.elder), repmat(1:rows(nodes.elder), num_of_elders, 1), I(:, 1:num_of_elders)');
+    nodes.elder(ind) = true;
+    assert(all(sum(nodes.elder,2) == num_of_elders))
 end
 
 network_iterations = 20000;
@@ -100,30 +171,9 @@ fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = true;
 
 % Initialise network with min_section_size everywhere and only honest nodes
 % with zero age
-nodes.work = zeros(number_of_sections, max_section_size);
-nodes.age = zeros(number_of_sections, max_section_size);
-nodes.malicious = zeros(number_of_sections, max_section_size);
-nodes.active = logical(zeros(number_of_sections, max_section_size));
-nodes.active(:,1:start_section_size) = ones(number_of_sections, start_section_size);
-nodes.elder = logical(zeros(number_of_sections, max_section_size));
-
-nodes_active_indices = find(nodes.active);
-num_of_age_buckets = 16;
-age_bucket_size = numel(nodes_active_indices) / num_of_age_buckets;
-
-% Flat spread of ages
-% Start nodes at age 4 (they're adults, not infants)
-nodes.work(nodes_active_indices) = round(2.^((initial_network_age-4)*rand(size(nodes_active_indices)) + 4));
-nodes.age(nodes.active) = floor(log2(nodes.work(nodes.active)));
-
+nodes = initialise_network(number_of_sections, max_section_size, start_section_size);
+nodes = initialise_nodes(nodes, initial_network_age, num_of_elders);
 assert(size(nodes.work,1) == number_of_sections);
-for s = 1:size(nodes.work,1)
-    [sorted_work,I] = sort(nodes.work(s,:),'descend');
-    nodes.elder(s,I(1:num_of_elders)) = true;
-    if numel(I) > num_of_elders
-        nodes.elder(s,I(num_of_elders+1:end)) = false;
-    end
-end
 
 % Evolve network before starting
 for n = 1:network_iterations
@@ -143,56 +193,16 @@ for n = 1:network_iterations
     nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
     %fraction_of_network_dropped = nodes_to_add / network_size_before_drop
 
-    % Node joins should flow towards the smallest sections, but to be on the
-    % safe side add nodes to the smallest sections first.
-    % Quite an ugly workaround, but this all of course comes from performance
-    % considerations.
-    % Duplication galore!
-    small_sections = sum(nodes.active, 2) < min_section_size;
-    number_of_small_sections = sum(small_sections);
-    while sum(small_sections) > 0
-        i = find(small_sections, 1);
-        j = find(nodes.active(i,:) == false, 1);
-        nodes.work(i,j) = 2^4;
-        nodes.age(i,j) = round(log2(nodes.work(i,j)));
-        if n > init_iterations && fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones
-            nodes.malicious(i,j) = logical(rand() < fraction_of_new_nodes_are_malicious);
-        else
-            nodes.malicious(i,j) = false;
-        end
-        nodes.active(i,j) = true;
-        small_sections = sum(nodes.active, 2) < min_section_size;
-        nodes_to_add -= 1;
-    end
-
-    % Add the rest
-    node_slots_available = find(nodes.active == false);
-    I = randperm(length(node_slots_available));
-    assert(length(I) > nodes_to_add);
-    I = I(1:nodes_to_add);
-    nodes.work(node_slots_available(I)) = 2^4;
-    nodes.age(node_slots_available(I)) = round(log2(2^4));
-    if n > init_iterations && fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones
-        nodes.malicious(node_slots_available(I)) = logical(rand(length(I), 1) < fraction_of_new_nodes_are_malicious);
-    else
-        nodes.malicious(node_slots_available(I)) = false;
-    end
-    nodes.active(node_slots_available(I)) = true;
+    add_malicious_nodes = fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones && n > init_iterations;
+    nodes = join_new(nodes, nodes_to_add, min_section_size, add_malicious_nodes, fraction_of_new_nodes_are_malicious);
     assert(floor(log2(nodes.work(nodes.active))) == nodes.age(nodes.active));
 
     % Assign elder status
-    [sorted_work,I] = sort(nodes.work, 2, 'descend');
-    nodes.elder = logical(zeros(number_of_sections, max_section_size));
-    ind = sub2ind (size(nodes.elder), repmat(1:rows(nodes.elder),num_of_elders,1), I(:,1:num_of_elders)');
-    nodes.elder(ind) = true;
-    assert(all(sum(nodes.elder,2) == num_of_elders))
+    nodes = assign_elder_status(nodes, num_of_elders);
 
     % If we should stop adding malicious nodes
-    if sum(sum(nodes.malicious))/sum(sum(nodes.active)) > fraction_of_new_nodes_are_malicious
-        fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = false;
-    else
-        fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = true;
-    end
+    fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones =  ...
+        sum(sum(nodes.malicious))/sum(sum(nodes.active)) < fraction_of_new_nodes_are_malicious;
 
     % Section size statistics
     section_size = sum(nodes.active, 2)';
