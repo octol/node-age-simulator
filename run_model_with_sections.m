@@ -49,7 +49,7 @@ function run_model_with_sections(...
 
         section_stats = collect_section_statistics(n, section_stats, nodes, section_stalled_threshold, num_of_elders);
 
-        if mod(n, 100) == 1
+        if mod(n, 100) == 0
             fprintf('section size (mean/std): %d / %d \n', section_stats.size_mean(n), section_stats.size_std(n));
 
             plot_statistics(n, section_stats, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders);
