@@ -9,15 +9,17 @@ function run_model_with_sections(...
     init_iterations,
     fraction_of_new_nodes_are_malicious)
 
+    export_plots = false;
     section_stalled_threshold = 1/3;
     fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = true;
-    section_stats = struct('size', []);
 
     % Initialise network with min_section_size everywhere and only honest nodes
     % with zero age
     nodes = initialise_network(number_of_sections, max_section_size, start_section_size);
     nodes = initialise_nodes(nodes, initial_network_age, num_of_elders);
     assert(size(nodes.work, 1) == number_of_sections);
+
+    section_stats = struct('size', []);
 
     % Evolve network before starting
     for n = 1:network_iterations
@@ -56,10 +58,26 @@ function run_model_with_sections(...
         end
     end
 
-    %figure(1)
-    %print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),"_elders_",num2str(num_of_elders),".png"],'-dpng');
-    %figure(2)
-    %print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),"_elders_",num2str(num_of_elders),".png"],'-dpng');
+    filename1 = [...
+        'section_model_malicious_per_section_age_', num2str(initial_network_age), ...
+        '_adversary_', num2str(fraction_of_new_nodes_are_malicious), ...
+        '_section_size_', num2str(min_section_size), ...
+        '_no_sections_', num2str(number_of_sections), ...
+        '_elders_', num2str(num_of_elders),...
+        '.png'];
+    filename2 = [...
+        'section_model_stallable_sections_age_', num2str(initial_network_age),...
+        '_adversary_', num2str(fraction_of_new_nodes_are_malicious),...
+        '_section_size_', num2str(min_section_size),...
+        '_no_sections_', num2str(number_of_sections),...
+        '_elders_', num2str(num_of_elders),...
+        '.png'];
+    if export_plots
+        figure(1)
+        print(filename1, '-dpng');
+        figure(2)
+        print(filename2, '-dpng');
+    end
 end
 
 function nodes = initialise_network(number_of_sections, max_section_size, start_section_size)
