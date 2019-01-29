@@ -62,6 +62,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
 section_stalled_threshold = 1/3;
+fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = true;
 
 % Initialise network with min_section_size everywhere and only honest nodes
 % with zero age
@@ -141,7 +142,7 @@ for n = 1:network_iterations
         j = find(nodes.active(i,:) == false, 1);
         nodes.work(i,j) = 2^4;
         nodes.age(i,j) = round(log2(nodes.work(i,j)));
-        if n > init_iterations
+        if n > init_iterations && fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones
             nodes.malicious(i,j) = logical(rand() < fraction_of_new_nodes_are_malicious);
         else
             nodes.malicious(i,j) = false;
@@ -158,7 +159,7 @@ for n = 1:network_iterations
     I = I(1:nodes_to_add);
     nodes.work(node_slots_available(I)) = 2^4;
     nodes.age(node_slots_available(I)) = round(log2(2^4));
-    if n > init_iterations
+    if n > init_iterations && fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones
         nodes.malicious(node_slots_available(I)) = logical(rand(length(I), 1) < fraction_of_new_nodes_are_malicious);
     else
         nodes.malicious(node_slots_available(I)) = false;
@@ -172,6 +173,13 @@ for n = 1:network_iterations
     ind = sub2ind (size(nodes.elder), repmat(1:rows(nodes.elder),num_of_elders,1), I(:,1:num_of_elders)');
     nodes.elder(ind) = true;
     assert(all(sum(nodes.elder,2) == num_of_elders))
+
+    % If we should stop adding malicious nodes
+    if sum(sum(nodes.malicious))/sum(sum(nodes.active)) > fraction_of_new_nodes_are_malicious
+        fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = false;
+    else
+        fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones = true;
+    end
 
     % Section size statistics
     section_size = sum(nodes.active, 2)';
