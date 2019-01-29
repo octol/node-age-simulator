@@ -11,6 +11,7 @@ number_of_sections = 5000;
 start_section_size = 20;
 max_section_size = 50;
 min_section_size = 10;
+num_of_elders = min_section_size;
 fraction_of_new_nodes_are_malicious = 0.20;
 
 % Scenario B (double section size)
