@@ -62,7 +62,7 @@ fraction_of_new_nodes_are_malicious = 0.20;
 %num_of_elders = min_section_size;
 %fraction_of_new_nodes_are_malicious = 0.20;
 
-run_model_with_sections(
+nodes = run_model_with_sections(
     number_of_sections,
     start_section_size,
     min_section_size,
