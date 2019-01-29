@@ -2,6 +2,39 @@ clear all
 figure(1); clf
 figure(2); clf
 
+function [nodes, I] = increase_age(nodes)
+    nodes_to_age = rem(log2(nodes.work), 1) == 0;
+    nodes.age(nodes_to_age) += 1;
+    I = find(nodes_to_age);
+end
+
+function nodes = relocate(nodes, nodes_to_age_indices)
+    % Find target slots
+    % Note: this means we relocate towards emptier sections
+    node_slots_available = find(nodes.active == false);
+    assert(length(nodes_to_age_indices) < length(node_slots_available));
+    I = randperm(length(node_slots_available));
+    I = I(1:length(nodes_to_age_indices));
+
+    % Relocate
+    nodes.work(node_slots_available(I)) = nodes.work(nodes_to_age_indices);
+    nodes.age(node_slots_available(I)) = nodes.age(nodes_to_age_indices);
+    nodes.malicious(node_slots_available(I)) = nodes.malicious(nodes_to_age_indices);
+    nodes.active(node_slots_available(I)) = nodes.active(nodes_to_age_indices);
+    nodes.work(nodes_to_age_indices) = 0;
+    nodes.age(nodes_to_age_indices) = 0;
+    nodes.malicious(nodes_to_age_indices) = false;
+    nodes.active(nodes_to_age_indices) = false;
+end
+
+function nodes = churn(nodes)
+    nodes_to_drop = and(rand(size(nodes.active)) < 1./nodes.work, nodes.active);
+    nodes.work(nodes_to_drop) = 0;
+    nodes.age(nodes_to_drop) = 0;
+    nodes.malicious(nodes_to_drop) = false;
+    nodes.active(nodes_to_drop) = false;
+end
+
 network_iterations = 20000;
 init_iterations = 0;
 initial_network_age = 16;
@@ -94,38 +127,17 @@ end
 
 % Evolve network before starting
 for n = 1:network_iterations
+    tic
     % All nodes does one unit of work
     nodes.work(nodes.active) += 1;
 
     % Increase age and relocate if work == 2^n
-    nodes_to_age = rem(log2(nodes.work), 1) == 0;
-    nodes.age(nodes_to_age) += 1;
-    nodes_to_age_indices = find(nodes_to_age);
-
-    % Find target slots
-    % Note: this means we relocate towards emptier sections
-    node_slots_available = find(nodes.active == false);
-    assert(length(nodes_to_age_indices) < length(node_slots_available));
-    I = randperm(length(node_slots_available));
-    I = I(1:length(nodes_to_age_indices));
-
-    % Relocate
-    nodes.work(node_slots_available(I)) = nodes.work(nodes_to_age_indices);
-    nodes.age(node_slots_available(I)) = nodes.age(nodes_to_age_indices);
-    nodes.malicious(node_slots_available(I)) = nodes.malicious(nodes_to_age_indices);
-    nodes.active(node_slots_available(I)) = nodes.active(nodes_to_age_indices);
-    nodes.work(nodes_to_age_indices) = 0;
-    nodes.age(nodes_to_age_indices) = 0;
-    nodes.malicious(nodes_to_age_indices) = false;
-    nodes.active(nodes_to_age_indices) = false;
+    [nodes, nodes_to_age_indices] = increase_age(nodes);
+    nodes = relocate(nodes, nodes_to_age_indices);
 
     % Randomly drop nodes according to 1/w
     network_size_before_drop = sum(sum(nodes.active));
-    nodes_to_drop = and(rand(number_of_sections, max_section_size) < 1./nodes.work, nodes.active);
-    nodes.work(nodes_to_drop) = 0;
-    nodes.age(nodes_to_drop) = 0;
-    nodes.malicious(nodes_to_drop) = false;
-    nodes.active(nodes_to_drop) = false;
+    nodes = churn(nodes);
 
     % Join new nodes
     nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
@@ -344,9 +356,11 @@ for n = 1:network_iterations
         ylabel("Fraction");
         drawnow
     end
+    toc
 end
 
 %figure(1)
 %print(["section_model_malicious_per_section_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),"_elders_",num2str(num_of_elders),".png"],'-dpng');
 %figure(2)
 %print(["section_model_stallable_sections_age_",num2str(initial_network_age), "_adversary_",num2str(fraction_of_new_nodes_are_malicious), "_section_size_", num2str(min_section_size),"_no_sections_",num2str(number_of_sections),"_elders_",num2str(num_of_elders),".png"],'-dpng');
+
