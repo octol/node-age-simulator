@@ -21,7 +21,6 @@ function run_model_with_sections(...
 
     % Evolve network before starting
     for n = 1:network_iterations
-        tic
         % All nodes does one unit of work
         nodes.work(nodes.active) += 1;
 
@@ -55,7 +54,6 @@ function run_model_with_sections(...
 
             plot_statistics(n, section_stats, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders);
         end
-        toc
     end
 
     %figure(1)
