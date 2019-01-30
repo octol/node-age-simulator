@@ -1,11 +1,11 @@
 clear all
 
-network_iterations = 1000;
+network_iterations = 20000;
 init_iterations = 0;
 initial_network_age = 16;
 
 % Test increasing section size
-number_of_sections = [500 250 100 50];
+number_of_sections = [5000 2500 1000 500];
 start_section_size = [20 40 100 200];
 max_section_size = [50 100 250 500];
 min_section_size = [10 20 50 100];
@@ -16,7 +16,7 @@ for ii = 1:length(number_of_sections)
     fprintf('Running with number_of_sections: %d\n', number_of_sections(ii));
     figure(1); clf
     figure(2); clf
-    nodes{ii} = run_model_with_sections(
+    [nodes{ii}, stats{ii}] = run_model_with_sections(
         number_of_sections(ii),
         start_section_size(ii),
         min_section_size(ii),
@@ -28,5 +28,3 @@ for ii = 1:length(number_of_sections)
         fraction_of_new_nodes_are_malicious
     );
 end
-
-size(sum(nodes{1}.malicious, 2));
