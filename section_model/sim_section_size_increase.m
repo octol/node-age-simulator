@@ -26,3 +26,5 @@ for ii = 1:length(number_of_sections)
         fraction_of_new_nodes_are_malicious
     );
 end
+
+save sim_section_size_increase.dat
