@@ -14,8 +14,6 @@ fraction_of_new_nodes_are_malicious = 0.20;
 
 for ii = 1:length(number_of_sections)
     fprintf('Running with number_of_sections: %d\n', number_of_sections(ii));
-    figure(1); clf
-    figure(2); clf
     [nodes{ii}, stats{ii}] = run_section_model(
         number_of_sections(ii),
         start_section_size(ii),

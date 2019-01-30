@@ -1,4 +1,4 @@
-function [nodes,sections_stats] = run_section_model(...
+function [nodes,section_stats] = run_section_model(...
     number_of_sections,
     start_section_size,
     min_section_size,
@@ -20,6 +20,9 @@ function [nodes,sections_stats] = run_section_model(...
     assert(size(nodes.work, 1) == number_of_sections);
 
     section_stats = struct('size', []);
+
+    figure(1); clf
+    figure(2); clf
 
     % Evolve network before starting
     for n = 1:network_iterations
@@ -190,38 +193,42 @@ function section_stats = collect_section_statistics(n, section_stats, nodes, sec
     section_stats.size = sum(nodes.active, 2)';
     section_stats.size_mean(n) = mean(section_stats.size);
     section_stats.size_std(n) = std(section_stats.size);
-    section_stats.size_malicious = sum(nodes.malicious.*nodes.active, 2)';
-    section_stats.size_load = section_stats.size_malicious ./ section_stats.size;
-    section_stats.size_load_max(n) = max(section_stats.size_load);
-    section_stats.size_load_mean(n) = mean(section_stats.size_load);
-    section_stats.size_load_std(n) = std(section_stats.size_load);
-    section_stats.stalled_size(n) = sum(section_stats.size_load > section_stalled_threshold) / number_of_sections;
+
+    % Section node statistics
+    section_stats.malicious_nodes = sum(nodes.malicious.*nodes.active, 2)';
+    section_stats.malicious_nodes_fraction = section_stats.malicious_nodes ./ section_stats.size;
+    section_stats.malicious_nodes_fraction_max(n) = max(section_stats.malicious_nodes_fraction);
+    section_stats.malicious_nodes_fraction_mean(n) = mean(section_stats.malicious_nodes_fraction);
+    section_stats.malicious_nodes_fraction_std(n) = std(section_stats.malicious_nodes_fraction);
+    section_stats.stalled(n) = sum(section_stats.malicious_nodes_fraction > section_stalled_threshold) / number_of_sections;
 
     % Section elders statistics
-    section_stats.elders_malicious = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_stats.elders_load = section_stats.elders_malicious ./ num_of_elders;
-    section_stats.elders_load_max(n) = max(section_stats.elders_load);
-    section_stats.elders_load_mean(n) = mean(section_stats.elders_load);
-    section_stats.elders_load_std(n) = std(section_stats.elders_load);
-    section_stats.stalled_elders(n) = sum(section_stats.elders_load > section_stalled_threshold) / number_of_sections;
+    section_stats.elders = sum(nodes.elder.*nodes.active, 2)';
+    assert(all(section_stats.elders == num_of_elders));
+    section_stats.malicious_elders = sum(nodes.elder.*nodes.malicious.*nodes.active, 2)';
+    section_stats.malicious_elders_fraction = section_stats.malicious_elders ./ num_of_elders;
+    section_stats.malicious_elders_fraction_max(n) = max(section_stats.malicious_elders_fraction);
+    section_stats.malicious_elders_fraction_mean(n) = mean(section_stats.malicious_elders_fraction);
+    section_stats.malicious_elders_fraction_std(n) = std(section_stats.malicious_elders_fraction);
+    section_stats.stalled_elders(n) = sum(section_stats.malicious_elders_fraction > section_stalled_threshold) / number_of_sections;
 
     % Section work statistics
     section_stats.work = sum(nodes.work.*nodes.elder.*nodes.active, 2)';
-    section_stats.work_malicious = sum(nodes.work.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_stats.work_load = section_stats.work_malicious ./ section_stats.work;
-    section_stats.work_load_max(n) = max(section_stats.work_load);
-    section_stats.work_load_mean(n) = mean(section_stats.work_load);
-    section_stats.work_load_std(n) = std(section_stats.work_load);
-    section_stats.stalled_work(n) = sum(section_stats.work_load > section_stalled_threshold) / number_of_sections;
+    section_stats.malicious_work = sum(nodes.work.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
+    section_stats.malicious_work_fraction = section_stats.malicious_work ./ section_stats.work;
+    section_stats.malicious_work_fraction_max(n) = max(section_stats.malicious_work_fraction);
+    section_stats.malicious_work_fraction_mean(n) = mean(section_stats.malicious_work_fraction);
+    section_stats.malicious_work_fraction_std(n) = std(section_stats.malicious_work_fraction);
+    section_stats.stalled_work(n) = sum(section_stats.malicious_work_fraction > section_stalled_threshold) / number_of_sections;
 
     % Section age statistics
     section_stats.age = sum(nodes.age.*nodes.elder.*nodes.active, 2)';
-    section_stats.age_malicious = sum(nodes.age.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
-    section_stats.age_load = section_stats.age_malicious ./ section_stats.age;
-    section_stats.age_load_max(n) = max(section_stats.age_load);
-    section_stats.age_load_mean(n) = mean(section_stats.age_load);
-    section_stats.age_load_std(n) = std(section_stats.age_load);
-    section_stats.stalled_age(n) = sum(section_stats.age_load > section_stalled_threshold) / number_of_sections;
+    section_stats.malicious_age = sum(nodes.age.*nodes.elder.*nodes.malicious.*nodes.active, 2)';
+    section_stats.malicious_age_fraction = section_stats.malicious_age ./ section_stats.age;
+    section_stats.malicious_age_fraction_max(n) = max(section_stats.malicious_age_fraction);
+    section_stats.malicious_age_fraction_mean(n) = mean(section_stats.malicious_age_fraction);
+    section_stats.malicious_age_fraction_std(n) = std(section_stats.malicious_age_fraction);
+    section_stats.stalled_age(n) = sum(section_stats.malicious_age_fraction > section_stalled_threshold) / number_of_sections;
 end
 
 function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders)
@@ -232,20 +239,20 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
 
     subplot(2,2,1)
     hold on
-    H1 = plot(1:100:n, section_stats.size_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+    H1 = plot(1:100:n, section_stats.malicious_nodes_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
     H2 = plot(
         1:100:n,
-        [max(section_stats.size_load_mean(1:100:end) - 0.5*section_stats.size_load_std(1:100:end), 0);...
-            section_stats.size_load_mean(1:100:end) + 0.5*section_stats.size_load_std(1:100:end)],
+        [max(section_stats.malicious_nodes_fraction_mean(1:100:end) - 0.5*section_stats.malicious_nodes_fraction_std(1:100:end), 0);...
+             section_stats.malicious_nodes_fraction_mean(1:100:end) + 0.5*section_stats.malicious_nodes_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'b'
     );
     H3 = plot(
         1:100:n,
-        [max(section_stats.size_load_mean(1:100:end) - section_stats.size_load_std(1:100:end), 0); ...
-            section_stats.size_load_mean(1:100:end) + section_stats.size_load_std(1:100:end)],
+        [max(section_stats.malicious_nodes_fraction_mean(1:100:end) - section_stats.malicious_nodes_fraction_std(1:100:end), 0); ...
+             section_stats.malicious_nodes_fraction_mean(1:100:end) + section_stats.malicious_nodes_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'm'
     );
-    H4 = plot(1:100:n, section_stats.size_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H4 = plot(1:100:n, section_stats.malicious_nodes_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
     hold off
     xlabel("Iterations");
     ylabel("Fraction");
@@ -255,20 +262,20 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
 
     subplot(2,2,2)
     hold on
-    H1 = plot(1:100:n, section_stats.elders_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+    H1 = plot(1:100:n, section_stats.malicious_elders_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
     H2 = plot(
         1:100:n,
-        [max(section_stats.elders_load_mean(1:100:end) - 0.5*section_stats.elders_load_std(1:100:end),0);
-            section_stats.elders_load_mean(1:100:end) + 0.5*section_stats.elders_load_std(1:100:end)],
+        [max(section_stats.malicious_elders_fraction_mean(1:100:end) - 0.5*section_stats.malicious_elders_fraction_std(1:100:end),0);
+            section_stats.malicious_elders_fraction_mean(1:100:end) + 0.5*section_stats.malicious_elders_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'b'
     );
     H3 = plot(
         1:100:n,
-        [max(section_stats.elders_load_mean(1:100:end) - section_stats.elders_load_std(1:100:end),0);
-            section_stats.elders_load_mean(1:100:end) + section_stats.elders_load_std(1:100:end)],
+        [max(section_stats.malicious_elders_fraction_mean(1:100:end) - section_stats.malicious_elders_fraction_std(1:100:end),0);
+            section_stats.malicious_elders_fraction_mean(1:100:end) + section_stats.malicious_elders_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'm'
     );
-    H4 = plot(1:100:n, section_stats.elders_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H4 = plot(1:100:n, section_stats.malicious_elders_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
     hold off
     xlabel("Iterations");
     ylabel("Fraction");
@@ -278,20 +285,20 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
 
     subplot(2,2,3)
     hold on
-    H1 = plot(1:100:n, section_stats.age_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+    H1 = plot(1:100:n, section_stats.malicious_age_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
     H2 = plot(
         1:100:n,
-        [max(section_stats.age_load_mean(1:100:end) - 0.5*section_stats.age_load_std(1:100:end),0);...
-            section_stats.age_load_mean(1:100:end) + 0.5*section_stats.age_load_std(1:100:end)],
+        [max(section_stats.malicious_age_fraction_mean(1:100:end) - 0.5*section_stats.malicious_age_fraction_std(1:100:end),0);...
+            section_stats.malicious_age_fraction_mean(1:100:end) + 0.5*section_stats.malicious_age_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'b'
     );
     H3 = plot(
         1:100:n,
-        [max(section_stats.age_load_mean(1:100:end) - section_stats.age_load_std(1:100:end),0);...
-            section_stats.age_load_mean(1:100:end) + section_stats.age_load_std(1:100:end)],
+        [max(section_stats.malicious_age_fraction_mean(1:100:end) - section_stats.malicious_age_fraction_std(1:100:end),0);...
+            section_stats.malicious_age_fraction_mean(1:100:end) + section_stats.malicious_age_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'm'
     );
-    H4 = plot(1:100:n, section_stats.age_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H4 = plot(1:100:n, section_stats.malicious_age_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
     hold off
     xlabel("Iterations");
     ylabel("Fraction");
@@ -301,20 +308,20 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
 
     subplot(2,2,4)
     hold on
-    H1 = plot(1:100:n, section_stats.work_load_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+    H1 = plot(1:100:n, section_stats.malicious_work_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
     H2 = plot(
         1:100:n,
-        [max(section_stats.work_load_mean(1:100:end) - 0.5*section_stats.work_load_std(1:100:end),0);...
-            section_stats.work_load_mean(1:100:end) + 0.5*section_stats.work_load_std(1:100:end)],
+        [max(section_stats.malicious_work_fraction_mean(1:100:end) - 0.5*section_stats.malicious_work_fraction_std(1:100:end),0);...
+            section_stats.malicious_work_fraction_mean(1:100:end) + 0.5*section_stats.malicious_work_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'b'
     );
     H3 = plot(
         1:100:n,
-        [max(section_stats.work_load_mean(1:100:end) - section_stats.work_load_std(1:100:end),0);...
-            section_stats.work_load_mean(1:100:end) + section_stats.work_load_std(1:100:end)],
+        [max(section_stats.malicious_work_fraction_mean(1:100:end) - section_stats.malicious_work_fraction_std(1:100:end),0);...
+            section_stats.malicious_work_fraction_mean(1:100:end) + section_stats.malicious_work_fraction_std(1:100:end)],
         'LineWidth', 2, 'Color', 'm'
     );
-    H4 = plot(1:100:n, section_stats.work_load_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H4 = plot(1:100:n, section_stats.malicious_work_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
     hold off
     xlabel("Iterations");
     ylabel("Fraction");
@@ -325,7 +332,7 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
     %subplot(2,2,4)
     figure(2)
     plot(
-        1:100:n, section_stats.stalled_size(1:100:end), 'LineWidth', 2,
+        1:100:n, section_stats.stalled(1:100:end), 'LineWidth', 2,
         1:100:n, section_stats.stalled_elders(1:100:end), 'LineWidth', 2,
         1:100:n, section_stats.stalled_age(1:100:end), 'LineWidth', 2,
         1:100:n, section_stats.stalled_work(1:100:end), 'LineWidth', 2
