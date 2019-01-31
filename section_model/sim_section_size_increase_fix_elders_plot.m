@@ -1,6 +1,5 @@
 clear all
-%load dat/sim_section_size_increase_fix_elders_10.dat
-load sim_section_size_increase_fix_elders_10_net_age_16.dat
+load dat/sim_section_size_increase_fix_elders_10_net_age_12.dat
 
 network_size = number_of_sections(1) * start_section_size(1);
 assert(all((number_of_sections.*start_section_size - network_size) == 0))
@@ -47,7 +46,7 @@ filename = [...
     '_n_', num2str(network_iterations), ...
     '_size_', num2str(network_size), ...
     '.png']
-%print(filename, '-dpng');
+print(filename, '-dpng');
 
 figure(2); clf;
 hold on
@@ -74,7 +73,7 @@ filename = [...
     '_n_', num2str(network_iterations), ...
     '_size_', num2str(network_size), ...
     '.png']
-%print(filename, '-dpng');
+print(filename, '-dpng');
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Plot against iterations
@@ -196,5 +195,5 @@ for ii = 1:length(number_of_sections)
         '_no_sections_', num2str(number_of_sections(ii)),...
         '_elders_', num2str(num_of_elders(ii)), ...
         '.png']
-    %print(filename, '-dpng');
+    print(filename, '-dpng');
 end
