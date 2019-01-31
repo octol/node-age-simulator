@@ -262,14 +262,46 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
         'LineWidth', 2, 'Color', 'm'
     );
     H4 = plot(1:100:n, section_stats.malicious_nodes_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
-    ylabel("Fraction");
-    legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
-    title('Malicious nodes per section')
+    ylabel("Mal. nodes / sect");
+    axis([0 n 0 0.7])
+    title([
+        'Sections (#/min): ', num2str(number_of_sections),'/', num2str(min_section_size),...
+        ', adversary: ', num2str(fraction_of_new_nodes_are_malicious)]
+    )
     drawnow;
 
     subplot(2,2,2)
+    hold on
+    H1 = plot(1:100:n, section_stats.malicious_node_age_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
+    H2 = plot(
+        1:100:n,
+        [max(section_stats.malicious_node_age_fraction_mean(1:100:end) - 0.5*section_stats.malicious_node_age_fraction_std(1:100:end),0);...
+             section_stats.malicious_node_age_fraction_mean(1:100:end) + 0.5*section_stats.malicious_node_age_fraction_std(1:100:end)],
+        'LineWidth', 2, 'Color', 'b'
+    );
+    H3 = plot(
+        1:100:n,
+        [max(section_stats.malicious_node_age_fraction_mean(1:100:end) - section_stats.malicious_node_age_fraction_std(1:100:end),0);...
+             section_stats.malicious_node_age_fraction_mean(1:100:end) + section_stats.malicious_node_age_fraction_std(1:100:end)],
+        'LineWidth', 2, 'Color', 'm'
+    );
+    H4 = plot(1:100:n, section_stats.malicious_node_age_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
+    hold off
+    xlabel("Iterations");
+    ylabel("Mal. node age / sect");
+    axis([0 n 0 0.7])
+    legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'NorthEastOutside');
+    title([
+        'a_n=', num2str(initial_network_age),...
+        ', elders=', num2str(num_of_elders)]
+    )
+    drawnow;
+
+    subplot(2,2,3)
     hold on
     H1 = plot(1:100:n, section_stats.malicious_elders_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
     H2 = plot(
@@ -285,14 +317,14 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
         'LineWidth', 2, 'Color', 'm'
     );
     H4 = plot(1:100:n, section_stats.malicious_elders_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
-    ylabel("Fraction");
-    legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
-    title('Malicious elders per section')
+    ylabel("Mal. elders / sect");
+    axis([0 n 0 0.7])
     drawnow;
 
-    subplot(2,2,3)
+    subplot(2,2,4)
     hold on
     H1 = plot(1:100:n, section_stats.malicious_age_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
     H2 = plot(
@@ -308,34 +340,11 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
         'LineWidth', 2, 'Color', 'm'
     );
     H4 = plot(1:100:n, section_stats.malicious_age_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
+    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
-    ylabel("Fraction");
-    legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
-    title('Malicious age per section')
-    drawnow;
-
-    subplot(2,2,4)
-    hold on
-    H1 = plot(1:100:n, section_stats.malicious_work_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
-    H2 = plot(
-        1:100:n,
-        [max(section_stats.malicious_work_fraction_mean(1:100:end) - 0.5*section_stats.malicious_work_fraction_std(1:100:end),0);...
-            section_stats.malicious_work_fraction_mean(1:100:end) + 0.5*section_stats.malicious_work_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'b'
-    );
-    H3 = plot(
-        1:100:n,
-        [max(section_stats.malicious_work_fraction_mean(1:100:end) - section_stats.malicious_work_fraction_std(1:100:end),0);...
-            section_stats.malicious_work_fraction_mean(1:100:end) + section_stats.malicious_work_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'm'
-    );
-    H4 = plot(1:100:n, section_stats.malicious_work_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
-    hold off
-    xlabel("Iterations");
-    ylabel("Fraction");
-    legend([H1, H2(1), H3(1), H4(1)], '\mu', '0.5\sigma', '\sigma', 'max', 'Location', 'Northwest');
-    title('Malicious work per section')
+    ylabel("Mal. elder age / sect");
+    axis([0 n 0 0.7])
     drawnow;
 
     %subplot(2,2,4)
