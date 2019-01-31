@@ -7,7 +7,13 @@ function [nodes,section_stats] = run_section_model(...
     num_of_elders,
     network_iterations,
     init_iterations,
-    fraction_of_new_nodes_are_malicious)
+    fraction_of_new_nodes_are_malicious,
+    zero_churn_adversary)
+
+    if nargin < 10
+        zero_churn_adversary = false;
+    end
+    assert(isa(zero_churn_adversary, 'logical'))
 
     export_plots = false;
     section_stalled_threshold = 1/3;
@@ -35,7 +41,11 @@ function [nodes,section_stats] = run_section_model(...
 
         % Randomly drop nodes according to 1/w
         network_size_before_drop = sum(sum(nodes.active));
-        nodes = churn(nodes);
+        if zero_churn_adversary
+            nodes = churn_honest_only(nodes);
+        else
+            nodes = churn(nodes);
+        end
 
         % Join new nodes
         nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
@@ -134,6 +144,14 @@ end
 
 function nodes = churn(nodes)
     nodes_to_drop = and(rand(size(nodes.active)) < 1./nodes.work, nodes.active);
+    nodes.work(nodes_to_drop) = 0;
+    nodes.age(nodes_to_drop) = 0;
+    nodes.malicious(nodes_to_drop) = false;
+    nodes.active(nodes_to_drop) = false;
+end
+
+function nodes = churn_honest_only(nodes)
+    nodes_to_drop = and(rand(size(nodes.active)) < 1./nodes.work, nodes.active .* ~nodes.malicious);
     nodes.work(nodes_to_drop) = 0;
     nodes.age(nodes_to_drop) = 0;
     nodes.malicious(nodes_to_drop) = false;
