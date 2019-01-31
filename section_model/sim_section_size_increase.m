@@ -6,7 +6,7 @@ initial_network_age = 16;
 
 % Test increasing section size
 network_size = 100000;
-min_section_size = [10 20 50 100];
+min_section_size = [10 20 50 100]
 start_section_size = round(2*min_section_size)
 max_section_size = round(5*min_section_size)
 number_of_sections = network_size ./ start_section_size
@@ -28,4 +28,5 @@ for ii = 1:length(number_of_sections)
     );
 end
 
-save('sim_section_size_increase.dat')
+filename = ['sim_section_size_increase_net_age_',num2str(initial_network_age),'.dat']
+save(filename)
