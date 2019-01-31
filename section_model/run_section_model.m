@@ -21,8 +21,8 @@ function [nodes,section_stats] = run_section_model(...
 
     section_stats = struct('size', []);
 
-    figure(1); clf
-    figure(2); clf
+    figure(1); clf;
+    figure(2); clf;
 
     % Evolve network before starting
     for n = 1:network_iterations
@@ -229,6 +229,15 @@ function section_stats = collect_section_statistics(n, section_stats, nodes, sec
     section_stats.malicious_age_fraction_mean(n) = mean(section_stats.malicious_age_fraction);
     section_stats.malicious_age_fraction_std(n) = std(section_stats.malicious_age_fraction);
     section_stats.stalled_age(n) = sum(section_stats.malicious_age_fraction > section_stalled_threshold) / number_of_sections;
+
+    % Section age statistics for all nodes, not just elders
+    section_stats.node_age = sum(nodes.age.*nodes.active, 2)';
+    section_stats.malicious_node_age = sum(nodes.age.*nodes.malicious.*nodes.active, 2)';
+    section_stats.malicious_node_age_fraction = section_stats.malicious_node_age ./ section_stats.node_age;
+    section_stats.malicious_node_age_fraction_max(n) = max(section_stats.malicious_node_age_fraction);
+    section_stats.malicious_node_age_fraction_mean(n) = mean(section_stats.malicious_node_age_fraction);
+    section_stats.malicious_node_age_fraction_std(n) = std(section_stats.malicious_node_age_fraction);
+    section_stats.stalled_node_age(n) = sum(section_stats.malicious_node_age_fraction > section_stalled_threshold) / number_of_sections;
 end
 
 function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders)
