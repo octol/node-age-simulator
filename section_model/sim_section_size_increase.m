@@ -7,9 +7,10 @@ initial_network_age = 16;
 % Test increasing section size
 network_size = 100000;
 min_section_size = [10 20 50 100]
+%min_section_size = [8 10 13 17 20 30 40 50 60 70 80 90 100 120 140 160 180 200]
 start_section_size = round(2*min_section_size)
 max_section_size = round(5*min_section_size)
-number_of_sections = network_size ./ start_section_size
+number_of_sections = round(network_size ./ start_section_size)
 num_of_elders = min_section_size;
 fraction_of_new_nodes_are_malicious = 0.20;
 
@@ -28,5 +29,9 @@ for ii = 1:length(number_of_sections)
     );
 end
 
-filename = ['sim_section_size_increase_net_age_',num2str(initial_network_age),'.dat']
+filename = [
+    'sim_section_size_increase_large_dataset',...
+    '_net_age_',num2str(initial_network_age),...
+    '_adv_',num2str(fraction_of_new_nodes_are_malicious),...
+    '.dat']
 save(filename)
