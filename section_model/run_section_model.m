@@ -67,36 +67,8 @@ function [nodes,section_stats] = run_section_model(...
         if occupied_fraction > 0.45
             % Split largest section
             fprintf('splitting section\n');
-            section_sizes = sum(nodes.active, 2);
-            [~, I] = max(section_sizes);
-            [~, J] = sort(nodes.age(I, :));
-
-            total_nodes_before = sum(sum(nodes.active));
-            total_work_before = sum(sum(nodes.work));
-
-            % Move every other node (sorted)
-            nodes.work = [nodes.work; zeros(size(nodes.work(I ,:)))];
-            nodes.age = [nodes.age; zeros(size(nodes.age(I ,:)))];
-            nodes.malicious = [nodes.malicious; logical(zeros(size(nodes.malicious(I ,:))))];
-            nodes.active = [nodes.active; logical(zeros(size(nodes.active(I ,:))))];
-            nodes.elder = [nodes.elder; logical(zeros(size(nodes.elder(1 ,:))))];
-
-            nodes.work(end, J(1:2:end)) = nodes.work(I, J(1:2:end));
-            nodes.age(end, J(1:2:end)) = nodes.age(I, J(1:2:end));
-            nodes.malicious(end, J(1:2:end)) = nodes.malicious(I, J(1:2:end));
-            nodes.active(end, J(1:2:end)) = nodes.active(I, J(1:2:end));
-            nodes.elder(end, J(1:2:end)) = nodes.elder(I, J(1:2:end));
-
-            nodes.work(I, J(1:2:end)) = 0;
-            nodes.age(I, J(1:2:end)) = 0;
-            nodes.malicious(I, J(1:2:end)) = false;
-            nodes.active(I, J(1:2:end)) = false;
-            nodes.elder(I, J(1:2:end)) = false;
-
-            assert(total_nodes_before == sum(sum(nodes.active)));
-            assert(total_work_before == sum(sum(nodes.work)));
+            nodes = split_largest_section(nodes);
         end
-
 
         % Join new nodes
         nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
@@ -207,6 +179,37 @@ function nodes = churn_honest_only(nodes)
     nodes.age(nodes_to_drop) = 0;
     nodes.malicious(nodes_to_drop) = false;
     nodes.active(nodes_to_drop) = false;
+end
+
+function nodes = split_largest_section(nodes)
+    section_sizes = sum(nodes.active, 2);
+    [~, I] = max(section_sizes);
+    [~, J] = sort(nodes.age(I, :));
+
+    total_nodes_before = sum(sum(nodes.active));
+    total_work_before = sum(sum(nodes.work));
+
+    % Move every other node (sorted)
+    nodes.work = [nodes.work; zeros(size(nodes.work(I ,:)))];
+    nodes.age = [nodes.age; zeros(size(nodes.age(I ,:)))];
+    nodes.malicious = [nodes.malicious; logical(zeros(size(nodes.malicious(I ,:))))];
+    nodes.active = [nodes.active; logical(zeros(size(nodes.active(I ,:))))];
+    nodes.elder = [nodes.elder; logical(zeros(size(nodes.elder(1 ,:))))];
+
+    nodes.work(end, J(1:2:end)) = nodes.work(I, J(1:2:end));
+    nodes.age(end, J(1:2:end)) = nodes.age(I, J(1:2:end));
+    nodes.malicious(end, J(1:2:end)) = nodes.malicious(I, J(1:2:end));
+    nodes.active(end, J(1:2:end)) = nodes.active(I, J(1:2:end));
+    nodes.elder(end, J(1:2:end)) = nodes.elder(I, J(1:2:end));
+
+    nodes.work(I, J(1:2:end)) = 0;
+    nodes.age(I, J(1:2:end)) = 0;
+    nodes.malicious(I, J(1:2:end)) = false;
+    nodes.active(I, J(1:2:end)) = false;
+    nodes.elder(I, J(1:2:end)) = false;
+
+    assert(total_nodes_before == sum(sum(nodes.active)));
+    assert(total_work_before == sum(sum(nodes.work)));
 end
 
 function nodes = join_new(nodes, nodes_to_add, min_section_size, add_malicious_nodes, fraction_of_new_nodes_are_malicious)
