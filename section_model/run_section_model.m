@@ -8,12 +8,27 @@ function [nodes,section_stats] = run_section_model(...
     network_iterations,
     init_iterations,
     fraction_of_new_nodes_are_malicious,
-    zero_churn_adversary)
+    zero_churn_adversary,
+    network_growth_rate)
+
+    assert(floor(number_of_sections) == number_of_sections);
+    assert(floor(start_section_size) == start_section_size);
+    assert(floor(min_section_size) == min_section_size);
+    assert(floor(max_section_size) == max_section_size);
+    assert(floor(initial_network_age) == initial_network_age);
+    assert(floor(num_of_elders) == num_of_elders);
+    assert(floor(network_iterations) == network_iterations);
+    assert(floor(init_iterations) == init_iterations);
 
     if nargin < 10
         zero_churn_adversary = false;
     end
     assert(isa(zero_churn_adversary, 'logical'))
+    if nargin < 11
+        network_growth_rate = 1;
+    end
+    assert(network_growth_rate >= 1, 'Network shrinking not supported')
+
 
     export_plots = false;
     section_stalled_threshold = 1/3;
@@ -46,6 +61,42 @@ function [nodes,section_stats] = run_section_model(...
         else
             nodes = churn(nodes);
         end
+
+        % Handle splits
+        occupied_fraction = sum(sum(nodes.active)) / prod(size(nodes.active));
+        if occupied_fraction > 0.45
+            % Split largest section
+            fprintf('splitting section\n');
+            section_sizes = sum(nodes.active, 2);
+            [~, I] = max(section_sizes);
+            [~, J] = sort(nodes.age(I, :));
+
+            total_nodes_before = sum(sum(nodes.active));
+            total_work_before = sum(sum(nodes.work));
+
+            % Move every other node (sorted)
+            nodes.work = [nodes.work; zeros(size(nodes.work(I ,:)))];
+            nodes.age = [nodes.age; zeros(size(nodes.age(I ,:)))];
+            nodes.malicious = [nodes.malicious; logical(zeros(size(nodes.malicious(I ,:))))];
+            nodes.active = [nodes.active; logical(zeros(size(nodes.active(I ,:))))];
+            nodes.elder = [nodes.elder; logical(zeros(size(nodes.elder(1 ,:))))];
+
+            nodes.work(end, J(1:2:end)) = nodes.work(I, J(1:2:end));
+            nodes.age(end, J(1:2:end)) = nodes.age(I, J(1:2:end));
+            nodes.malicious(end, J(1:2:end)) = nodes.malicious(I, J(1:2:end));
+            nodes.active(end, J(1:2:end)) = nodes.active(I, J(1:2:end));
+            nodes.elder(end, J(1:2:end)) = nodes.elder(I, J(1:2:end));
+
+            nodes.work(I, J(1:2:end)) = 0;
+            nodes.age(I, J(1:2:end)) = 0;
+            nodes.malicious(I, J(1:2:end)) = false;
+            nodes.active(I, J(1:2:end)) = false;
+            nodes.elder(I, J(1:2:end)) = false;
+
+            assert(total_nodes_before == sum(sum(nodes.active)));
+            assert(total_work_before == sum(sum(nodes.work)));
+        end
+
 
         % Join new nodes
         nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
@@ -95,7 +146,7 @@ end
 function nodes = initialise_network(number_of_sections, max_section_size, start_section_size)
     nodes.work = zeros(number_of_sections, max_section_size);
     nodes.age = zeros(number_of_sections, max_section_size);
-    nodes.malicious = zeros(number_of_sections, max_section_size);
+    nodes.malicious = logical(zeros(number_of_sections, max_section_size));
     nodes.active = logical(zeros(number_of_sections, max_section_size));
     nodes.active(:,1:start_section_size) = ones(number_of_sections, start_section_size);
     nodes.elder = logical(zeros(number_of_sections, max_section_size));
