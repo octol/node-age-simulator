@@ -25,7 +25,7 @@ function [nodes,section_stats] = run_section_model(...
     end
     assert(isa(zero_churn_adversary, 'logical'))
     if nargin < 11
-        network_growth_rate = 1;
+        network_growth_rate = 0;
     end
 
 
