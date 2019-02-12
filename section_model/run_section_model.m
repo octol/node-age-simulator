@@ -27,7 +27,6 @@ function [nodes,section_stats] = run_section_model(...
     if nargin < 11
         network_growth_rate = 1;
     end
-    assert(network_growth_rate >= 1, 'Network shrinking not supported')
 
 
     export_plots = false;
@@ -64,14 +63,21 @@ function [nodes,section_stats] = run_section_model(...
 
         % Handle splits
         occupied_fraction = sum(sum(nodes.active)) / prod(size(nodes.active));
-        if occupied_fraction > 0.45
+        % The 0.41 magic number is to keep the ratio between occupied and
+        % vacant slots the same as previous simulations.
+        while occupied_fraction > 0.41
             % Split largest section
-            fprintf('splitting section\n');
-            nodes = split_largest_section(nodes);
+            %fprintf('splitting sections, occupied_fraction: %d\n', occupied_fraction);
+            for ii = 1:10
+                nodes = split_largest_section(nodes);
+            end
+            occupied_fraction = sum(sum(nodes.active)) / prod(size(nodes.active));
+            %fprintf('  after splits, occupied_fraction: %d\n', occupied_fraction);
         end
 
         % Join new nodes
         nodes_to_add = network_size_before_drop - sum(sum(nodes.active));
+        nodes_to_add += round(network_growth_rate * sum(sum(nodes.active)));
         %fraction_of_network_dropped = nodes_to_add / network_size_before_drop
 
         add_malicious_nodes = fraction_of_existing_malicious_nodes_less_than_fraction_of_new_ones && n > init_iterations;
@@ -87,9 +93,14 @@ function [nodes,section_stats] = run_section_model(...
 
         section_stats = collect_section_statistics(n, section_stats, nodes, section_stalled_threshold, num_of_elders);
 
-        if mod(n, 1000) == 0
-            fprintf('section size (mean/std): %d / %d \n', section_stats.size_mean(n), section_stats.size_std(n));
-            plot_statistics(n, section_stats, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders);
+        if mod(n, 100) == 0
+            fprintf(
+                'section size (mean/std): %d/%.2f, network size: %d \n',
+                section_stats.size_mean(n),
+                section_stats.size_std(n),
+                sum(sum(nodes.active))
+            );
+            plot_statistics(n, section_stats, number_of_sections, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders);
         end
     end
 
@@ -312,8 +323,16 @@ function section_stats = collect_section_statistics(n, section_stats, nodes, sec
     section_stats.stalled_node_age(n) = sum(section_stats.malicious_node_age_fraction > section_stalled_threshold) / number_of_sections;
 end
 
-function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nodes_are_malicious, initial_network_age, num_of_elders)
-    number_of_sections = size(section_stats.size, 2);
+function plot_statistics(...
+    n,
+    section_stats,
+    number_of_sections,
+    min_section_size,
+    fraction_of_new_nodes_are_malicious,
+    initial_network_age,
+    num_of_elders)
+
+    current_number_of_sections = size(section_stats.size, 2);
     assert(size(section_stats.size, 1) == 1)
 
     figure(1)
@@ -341,7 +360,8 @@ function plot_statistics(n, section_stats, min_section_size, fraction_of_new_nod
     axis([0 n 0 0.7])
     title([
         'Sections (#/min): ', num2str(number_of_sections),'/', num2str(min_section_size),...
-        ', adversary: ', num2str(fraction_of_new_nodes_are_malicious)]
+        ', adversary: ', num2str(fraction_of_new_nodes_are_malicious),
+        'Current sections: ', num2str(current_number_of_sections)]
     )
     drawnow;
 
