@@ -16,7 +16,6 @@ for ii = 1:length(number_of_sections)
     malicious_elders_fraction_max(ii) = max(stats{ii}.malicious_elders_fraction);
 end
 
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Vary section size at end time
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -88,21 +87,11 @@ for ii = 1:length(number_of_sections)
 
     subplot(2,2,1)
     hold on
-    H1 = plot(1:100:n, section_stats.malicious_nodes_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
-    H2 = plot(
-        1:100:n,
-        [max(section_stats.malicious_nodes_fraction_mean(1:100:end) - 0.5*section_stats.malicious_nodes_fraction_std(1:100:end), 0);...
-             section_stats.malicious_nodes_fraction_mean(1:100:end) + 0.5*section_stats.malicious_nodes_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'b'
+    [H1,H2,H3,H4,H5] = plot_mean_std_max(n,
+        section_stats.malicious_nodes_fraction_mean,
+        section_stats.malicious_nodes_fraction_std,
+        section_stats.malicious_nodes_fraction_max
     );
-    H3 = plot(
-        1:100:n,
-        [max(section_stats.malicious_nodes_fraction_mean(1:100:end) - section_stats.malicious_nodes_fraction_std(1:100:end), 0); ...
-             section_stats.malicious_nodes_fraction_mean(1:100:end) + section_stats.malicious_nodes_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'm'
-    );
-    H4 = plot(1:100:n, section_stats.malicious_nodes_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
-    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
     ylabel("Mal. nodes / sect");
@@ -115,21 +104,11 @@ for ii = 1:length(number_of_sections)
 
     subplot(2,2,2)
     hold on
-    H1 = plot(1:100:n, section_stats.malicious_node_age_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
-    H2 = plot(
-        1:100:n,
-        [max(section_stats.malicious_node_age_fraction_mean(1:100:end) - 0.5*section_stats.malicious_node_age_fraction_std(1:100:end),0);...
-            section_stats.malicious_node_age_fraction_mean(1:100:end) + 0.5*section_stats.malicious_node_age_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'b'
+    [H1,H2,H3,H4,H5] = plot_mean_std_max(n,
+        section_stats.malicious_node_age_fraction_mean,
+        section_stats.malicious_node_age_fraction_std,
+        section_stats.malicious_node_age_fraction_max
     );
-    H3 = plot(
-        1:100:n,
-        [max(section_stats.malicious_node_age_fraction_mean(1:100:end) - section_stats.malicious_node_age_fraction_std(1:100:end),0);...
-            section_stats.malicious_node_age_fraction_mean(1:100:end) + section_stats.malicious_node_age_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'm'
-    );
-    H4 = plot(1:100:n, section_stats.malicious_node_age_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
-    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
     ylabel("Mal. node age / sect");
@@ -143,21 +122,11 @@ for ii = 1:length(number_of_sections)
 
     subplot(2,2,3)
     hold on
-    H1 = plot(1:100:n, section_stats.malicious_elders_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
-    H2 = plot(
-        1:100:n,
-        [max(section_stats.malicious_elders_fraction_mean(1:100:end) - 0.5*section_stats.malicious_elders_fraction_std(1:100:end),0);
-            section_stats.malicious_elders_fraction_mean(1:100:end) + 0.5*section_stats.malicious_elders_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'b'
+    [H1,H2,H3,H4,H5] = plot_mean_std_max(n,
+        section_stats.malicious_elders_fraction_mean,
+        section_stats.malicious_elders_fraction_std,
+        section_stats.malicious_elders_fraction_max
     );
-    H3 = plot(
-        1:100:n,
-        [max(section_stats.malicious_elders_fraction_mean(1:100:end) - section_stats.malicious_elders_fraction_std(1:100:end),0);
-            section_stats.malicious_elders_fraction_mean(1:100:end) + section_stats.malicious_elders_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'm'
-    );
-    H4 = plot(1:100:n, section_stats.malicious_elders_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
-    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
     ylabel("Mal. elders / sect");
@@ -166,21 +135,11 @@ for ii = 1:length(number_of_sections)
 
     subplot(2,2,4)
     hold on
-    H1 = plot(1:100:n, section_stats.malicious_age_fraction_mean(1:100:end), 'LineWidth', 2, 'Color', 'k');
-    H2 = plot(
-        1:100:n,
-        [max(section_stats.malicious_age_fraction_mean(1:100:end) - 0.5*section_stats.malicious_age_fraction_std(1:100:end),0);...
-            section_stats.malicious_age_fraction_mean(1:100:end) + 0.5*section_stats.malicious_age_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'b'
+    [H1,H2,H3,H4,H5] = plot_mean_std_max(n,
+        section_stats.malicious_age_fraction_mean,
+        section_stats.malicious_age_fraction_std,
+        section_stats.malicious_age_fraction_max
     );
-    H3 = plot(
-        1:100:n,
-        [max(section_stats.malicious_age_fraction_mean(1:100:end) - section_stats.malicious_age_fraction_std(1:100:end),0);...
-            section_stats.malicious_age_fraction_mean(1:100:end) + section_stats.malicious_age_fraction_std(1:100:end)],
-        'LineWidth', 2, 'Color', 'm'
-    );
-    H4 = plot(1:100:n, section_stats.malicious_age_fraction_max(1:100:end), 'LineWidth', 2, 'Color', 'g');
-    H5 = plot(1:100:n, 1/3*ones(size(1:100:n)), 'LineWidth', 2, 'k--');
     hold off
     xlabel("Iterations");
     ylabel("Mal. elder age / sect");
@@ -197,3 +156,4 @@ for ii = 1:length(number_of_sections)
         '.png']
     print(filename, '-dpng');
 end
+
