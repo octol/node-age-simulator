@@ -11,7 +11,7 @@ min_section_size = 100
 start_section_size = 2*min_section_size
 max_section_size = 5*min_section_size
 number_of_sections = ceil(network_size ./ start_section_size)
-num_of_elders = [10 20 30 40 50]*ones(size(number_of_sections))
+num_of_elders = [10 20 30 40 50 60 70 80 90]*ones(size(number_of_sections))
 fraction_of_new_nodes_are_malicious = 0.05
 zero_churn_adversary = true;
 
