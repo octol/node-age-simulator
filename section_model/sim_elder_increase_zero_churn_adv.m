@@ -1,7 +1,7 @@
 clear all
 
-%network_iterations = 20000;
-network_iterations = 8000;
+network_iterations = 20000;
+%network_iterations = 8000;
 init_iterations = 0;
 initial_network_age = 12;
 
