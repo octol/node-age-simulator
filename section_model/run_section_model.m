@@ -50,7 +50,7 @@ function [nodes,section_stats] = run_section_model(...
         nodes.work(nodes.active) += 1;
 
         % Increase age and relocate if work == 2^n
-        [nodes, nodes_to_age_indices] = increase_age(nodes);
+        [nodes, nodes_to_age_indices] = increase_age_randomly(nodes);
         nodes = relocate(nodes, nodes_to_age_indices);
 
         % Randomly drop nodes according to 1/w
@@ -154,6 +154,13 @@ end
 function [nodes, I] = increase_age(nodes)
     nodes_to_age = rem(log2(nodes.work), 1) == 0;
     nodes.age(nodes_to_age) += 1;
+    I = find(nodes_to_age);
+end
+
+function [nodes, I] = increase_age_randomly(nodes)
+    nodes_to_age = and(rand(size(nodes.age)) < 1./(2.^nodes.age), nodes.active);
+    nodes.age(nodes_to_age) += 1;
+    nodes.work(nodes.active) = 2.^(nodes.age(nodes.active));
     I = find(nodes_to_age);
 end
 
